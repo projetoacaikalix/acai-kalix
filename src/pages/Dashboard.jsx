@@ -51,11 +51,7 @@ export default function Dashboard() {
             let revToday = 0, revWeek = 0, revMonth = 0, total = 0;
             const today = new Date();
 
-            const mockedSales = salesError || !sales?.length ? [
-                { total: 150.50, created_at: new Date().toISOString() },
-                { total: 45.00, created_at: new Date(today.getTime() - 86400000).toISOString() },
-                { total: 320.00, created_at: new Date(today.getTime() - 86400000 * 2).toISOString() },
-            ] : sales;
+            const mockedSales = salesError || !sales?.length ? [] : sales;
 
             mockedSales.forEach(sale => {
                 const saleDate = new Date(sale.created_at);
@@ -78,18 +74,15 @@ export default function Dashboard() {
 
             // 2. Fetch Stock Data
             const { data: products } = await supabase.from('products').select('name, stock, status').eq('status', true);
-            const activeProds = products || [
-                { name: 'Açaí 300ml', stock: 2 },
-                { name: 'Copos Plásticos', stock: 10 },
-                { name: 'Leite Ninho', stock: 3 },
-            ];
+            const activeProds = products || [];
 
             setLowStockProducts(activeProds.filter(p => p.stock <= 5).slice(0, 5));
 
-            // 3. Mock Top Products Chart
+            // Em um cenário real de banco, você faria uma query agrupa os produtos mais vendidos.
+            // Como exemplo, mantemos a estrutura vazia ou alimentada da sua própria query futura.
             setTopProducts({
-                labels: ['Açaí 500ml', 'Açaí 300ml', 'Morango', 'Leite Condensado', 'Banana'],
-                data: [120, 90, 85, 80, 60]
+                labels: [],
+                data: []
             });
 
         } catch (e) {

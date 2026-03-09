@@ -31,11 +31,7 @@ export default function Products() {
 
         if (error) {
             console.error('Error fetching products', error);
-            // fallback for local UI testing if supabase is not connected
-            setProducts([
-                { id: '1', name: 'Açaí Tradicional 500ml', category: 'Açaí', price: 15.00, stock: 50, status: true },
-                { id: '2', name: 'Morango', category: 'Complementos', price: 3.00, stock: 5, status: true },
-            ]);
+            setProducts([]);
         } else {
             setProducts(data || []);
         }
