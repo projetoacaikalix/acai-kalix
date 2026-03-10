@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { RefreshCw, PackagePlus, AlertCircle } from 'lucide-react';
+import { RefreshCw, PackagePlus, AlertCircle, Trash2 } from 'lucide-react';
 import { formatCurrency, confirmAlert, successAlert, errorAlert } from '../utils';
 
 export default function Stock() {
@@ -68,6 +68,16 @@ export default function Stock() {
 
         try {
             if (editingId) {
+                const { data: oldMove } = await supabase.from('stock_movements').select('*').eq('id', editingId).single();
+                if (oldMove && oldMove.product_id) {
+                    const { data: currentProduct } = await supabase.from('products').select('stock').eq('id', oldMove.product_id).single();
+                    if (currentProduct) {
+                        let newStock = oldMove.type === 'in' ? currentProduct.stock - oldMove.quantity : currentProduct.stock + oldMove.quantity;
+                        newStock = formData.type === 'in' ? newStock + qty : newStock - qty;
+                        await supabase.from('products').update({ stock: newStock }).eq('id', oldMove.product_id);
+                    }
+                }
+
                 await supabase.from('stock_movements').update({
                     quantity: qty,
                     value: val,
@@ -134,12 +144,49 @@ export default function Stock() {
     };
 
     const handleDelete = async (id) => {
-        const confirmed = await confirmAlert('Excluir Movimentação?', 'Excluir este registro do histórico de estoque?');
+        const confirmed = await confirmAlert('Excluir Movimentação?', 'Excluir este registro do histórico de estoque? O saldo será recalculado.');
         if (confirmed) {
             setLoading(true);
-            await supabase.from('stock_movements').delete().eq('id', id);
-            fetchData();
-            successAlert('Registro removido do histórico.');
+            try {
+                const { data: moveData } = await supabase.from('stock_movements').select('*').eq('id', id).single();
+                if (moveData && moveData.product_id) {
+                    const { data: currentProduct } = await supabase.from('products').select('stock').eq('id', moveData.product_id).single();
+                    if (currentProduct) {
+                        const newStock = moveData.type === 'in'
+                            ? currentProduct.stock - moveData.quantity
+                            : currentProduct.stock + moveData.quantity;
+                        await supabase.from('products').update({ stock: newStock }).eq('id', moveData.product_id);
+                    }
+                }
+
+                await supabase.from('stock_movements').delete().eq('id', id);
+                fetchData();
+                successAlert('Registro removido do histórico (Estoque Ajustado).');
+            } catch (e) {
+                console.error(e);
+                errorAlert('Erro na Exclusão', 'Não foi possível reverter o estoque.');
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
+    const handleDeleteProduct = async (id) => {
+        const confirmed = await confirmAlert('Excluir Insumo Permanentemente?', 'Isso apagará este componente da grade e excluirá todo seu histórico. Continuar?');
+        if (confirmed) {
+            setLoading(true);
+            try {
+                // Delete dependente movements first to respect FK if cascade is not on
+                await supabase.from('stock_movements').delete().eq('product_id', id);
+                await supabase.from('products').delete().eq('id', id);
+                fetchData();
+                successAlert('Insumo e histórico excluídos com sucesso.');
+            } catch (e) {
+                console.error(e);
+                errorAlert('Erro na Exclusão', 'Não foi possível excluir o insumo.');
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -175,12 +222,13 @@ export default function Stock() {
                                 <th style={{ padding: '12px 16px', borderBottom: '2px solid #e2e8f0' }}>Produto</th>
                                 <th style={{ padding: '12px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Qtd</th>
                                 <th style={{ padding: '12px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Valor (Total)</th>
+                                <th style={{ padding: '12px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'center' }}>Ação</th>
                             </tr>
                         </thead>
                         <tbody>
                             {products.length === 0 ? (
                                 <tr>
-                                    <td colSpan="3" style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>Nenhum item em estoque.</td>
+                                    <td colSpan="4" style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>Nenhum item em estoque.</td>
                                 </tr>
                             ) : (
                                 products.map(p => (
@@ -195,6 +243,11 @@ export default function Stock() {
                                         </td>
                                         <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#0f172a', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
                                             {formatCurrency(p.totalValue || 0)}
+                                        </td>
+                                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                                            <button className="btn-icon-only text-danger" title="Excluir Insumo" style={{ background: '#fee2e2', border: 'none', cursor: 'pointer', padding: '6px', minWidth: '32px', minHeight: '32px' }} onClick={() => handleDeleteProduct(p.id)}>
+                                                <Trash2 size={16} color="var(--danger)" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
