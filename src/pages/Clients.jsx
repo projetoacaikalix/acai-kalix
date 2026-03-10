@@ -115,6 +115,19 @@ export default function Clients() {
                 )}
             </div>
 
+            {/* Total de Clientes Card */}
+            {!loading && (
+                <div className="card mb-4" style={{ display: 'flex', alignItems: 'center', padding: '16px', background: 'linear-gradient(to right, #f8fafc, #ffffff)', border: '1px solid #e2e8f0' }}>
+                    <div style={{ background: '#f3e8ff', padding: '12px', borderRadius: '12px', marginRight: '16px' }}>
+                        <Users size={24} color="var(--primary)" />
+                    </div>
+                    <div>
+                        <p className="text-muted" style={{ margin: 0, fontSize: '0.9rem', fontWeight: 500 }}>Total de Clientes</p>
+                        <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--text-main)' }}>{clients.length}</p>
+                    </div>
+                </div>
+            )}
+
             {isFormOpen && (
                 <div className="card mb-4 animate-fade-in">
                     <div className="flex justify-between items-center mb-4">

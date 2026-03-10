@@ -13,6 +13,11 @@ export default function Sales() {
     // Sale State
     const [selectedClient, setSelectedClient] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('Pix');
+
+    const now = new Date();
+    const defaultDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    const [saleDate, setSaleDate] = useState(defaultDate);
+
     const [cart, setCart] = useState([]);
 
     const [recentSales, setRecentSales] = useState([]);
@@ -79,7 +84,8 @@ export default function Sales() {
                 await supabase.from('sales').update({
                     client_id: selectedClient || null,
                     total: totalCart,
-                    payment_method: paymentMethod
+                    payment_method: paymentMethod,
+                    created_at: new Date(saleDate).toISOString()
                 }).eq('id', editingSaleId);
 
                 await supabase.from('sale_items').delete().eq('sale_id', editingSaleId);
@@ -98,7 +104,8 @@ export default function Sales() {
                 const { data: saleData, error: saleError } = await supabase.from('sales').insert([{
                     client_id: selectedClient || null,
                     total: totalCart,
-                    payment_method: paymentMethod
+                    payment_method: paymentMethod,
+                    created_at: new Date(saleDate).toISOString()
                 }]).select();
 
                 if (saleError) throw saleError;
@@ -150,6 +157,7 @@ export default function Sales() {
             setCart([]);
             setSelectedClient('');
             setPaymentMethod('Pix');
+            setSaleDate(defaultDate);
             fetchInitialData();
 
             setTimeout(() => setSuccessMsg(''), 3000);
@@ -247,6 +255,16 @@ export default function Sales() {
                 {/* Lado Direito: Carrinho e Checkout */}
                 <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
                     <h2 className="flex items-center gap-2 mb-4"><ShoppingCart size={20} /> Resumo da Venda</h2>
+
+                    <div className="form-group mb-2">
+                        <label>Data da Venda</label>
+                        <input
+                            type="datetime-local"
+                            className="input-field"
+                            value={saleDate}
+                            onChange={(e) => setSaleDate(e.target.value)}
+                        />
+                    </div>
 
                     <div className="form-group">
                         <label>Cliente (Opcional)</label>
