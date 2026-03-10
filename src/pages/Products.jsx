@@ -27,6 +27,7 @@ export default function Products() {
         const { data, error } = await supabase
             .from('products')
             .select('*')
+            .eq('category', 'Açaí')
             .order('name');
 
         if (error) {

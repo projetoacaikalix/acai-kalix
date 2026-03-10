@@ -146,6 +146,7 @@ export default function Dashboard() {
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
+        indexAxis: 'y', // Barra horizontal
         plugins: {
             legend: { display: false },
             datalabels: {
