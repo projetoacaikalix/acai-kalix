@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { ShoppingCart, Package, Plus, Trash2, Check, RefreshCw } from 'lucide-react';
+import { formatCurrency } from '../utils';
 
 export default function Sales() {
     const [products, setProducts] = useState([]);
@@ -192,7 +193,7 @@ export default function Sales() {
                                         <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px', marginBottom: '8px' }} />
                                     )}
                                     <h3 style={{ fontSize: '0.9rem', marginBottom: '4px' }}>{p.name}</h3>
-                                    <p className="text-bold text-primary" style={{ fontSize: '1.1rem' }}>R$ {p.price.toFixed(2)}</p>
+                                    <p className="text-bold text-primary" style={{ fontSize: '1.1rem' }}>{formatCurrency(p.price)}</p>
                                 </div>
                             ))}
                         </div>
@@ -223,7 +224,7 @@ export default function Sales() {
                                     <div key={item.id} className="flex justify-between items-center bg-white p-2 rounded border" style={{ background: '#fff', padding: '12px', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                                         <div style={{ flex: 1 }}>
                                             <p className="text-bold" style={{ margin: 0 }}>{item.name}</p>
-                                            <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>R$ {item.price.toFixed(2)} x {item.qty}</p>
+                                            <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>{formatCurrency(item.price)} x {item.qty}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button className="btn-icon-only text-danger" style={{ minWidth: '32px', minHeight: '32px', padding: 0 }} onClick={() => updateCartQty(item.id, -1)}>-</button>
@@ -258,7 +259,7 @@ export default function Sales() {
                     <div className="flex justify-between items-center mt-4 mb-4 pb-4" style={{ borderBottom: '2px dashed #e5e7eb' }}>
                         <span className="text-muted" style={{ fontSize: '1.2rem' }}>Total:</span>
                         <span className="text-bold" style={{ fontSize: '2rem', color: 'var(--primary)' }}>
-                            R$ {totalCart.toFixed(2)}
+                            {formatCurrency(totalCart)}
                         </span>
                     </div>
 
@@ -290,7 +291,7 @@ export default function Sales() {
                                 </p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                                <span className="text-bold text-success" style={{ fontSize: '1.1rem' }}>R$ {parseFloat(sale.total).toFixed(2)}</span>
+                                <span className="text-bold text-success" style={{ fontSize: '1.1rem' }}>{formatCurrency(sale.total)}</span>
                                 <button className="btn-icon-only text-primary" style={{ background: '#f3e8ff', border: 'none', cursor: 'pointer', padding: '6px', minWidth: '36px', minHeight: '36px' }} onClick={() => handleEditSale(sale)}>
                                     ✏️ Editar
                                 </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Plus, Edit2, Trash2, X, RefreshCw } from 'lucide-react';
+import { formatCurrency } from '../utils';
 
 export default function Products() {
     const [products, setProducts] = useState([]);
@@ -192,7 +193,7 @@ export default function Products() {
                                         <h3>{p.name}</h3>
                                         <p className="flex items-center gap-2">
                                             <span className={`badge ${p.status ? 'badge-success' : 'badge-danger'}`}>{p.status ? 'Ativo' : 'Inativo'}</span>
-                                            <span className="text-bold">R$ {parseFloat(p.price).toFixed(2)}</span>
+                                            <span className="text-bold">{formatCurrency(p.price)}</span>
                                         </p>
                                     </div>
                                 </div>

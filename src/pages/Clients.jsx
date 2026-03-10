@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Users, Plus, X, RefreshCw } from 'lucide-react';
+import { formatCurrency } from '../utils';
 
 export default function Clients() {
     const [clients, setClients] = useState([]);
@@ -166,12 +167,12 @@ export default function Clients() {
                                     </div>
                                     <div className="flex justify-between items-center" style={{ marginTop: '8px', marginBottom: '8px' }}>
                                         <div className="text-left">
-                                            <p style={{ margin: 0, color: 'var(--success)', fontWeight: 'bold', fontSize: '1.1rem' }}>R$ {c.totalSpent.toFixed(2)}</p>
+                                            <p style={{ margin: 0, color: 'var(--success)', fontWeight: 'bold', fontSize: '1.1rem' }}>{formatCurrency(c.totalSpent)}</p>
                                             <p style={{ margin: 0, fontSize: '0.75rem' }} className="text-muted">{c.totalPurchases} compras</p>
                                         </div>
                                     </div>
                                     <div className="flex justify-between" style={{ fontSize: '0.85rem', background: '#f9fafb', padding: '12px', borderRadius: '8px' }}>
-                                        <span>Ticket Médio: <strong style={{ color: 'var(--text-main)' }}>R$ {c.avgTicket.toFixed(2)}</strong></span>
+                                        <span>Ticket Médio: <strong style={{ color: 'var(--text-main)' }}>{formatCurrency(c.avgTicket)}</strong></span>
                                         <span>Última: <strong style={{ color: 'var(--text-main)' }}>{c.lastPurchase}</strong></span>
                                     </div>
                                 </div>

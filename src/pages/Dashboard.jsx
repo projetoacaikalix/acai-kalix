@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import { formatCurrency } from '../utils';
 import { TrendingUp, DollarSign, ShoppingBag, AlertTriangle, Users, Calendar, Award } from 'lucide-react';
 
 import {
@@ -202,12 +203,12 @@ export default function Dashboard() {
             datalabels: {
                 color: '#ffffff',
                 font: { weight: 'bold', size: 12 },
-                formatter: (value) => 'R$ ' + value.toFixed(0)
+                formatter: (value) => formatCurrency(value)
             },
             tooltip: {
                 callbacks: {
                     label: function (context) {
-                        return ' R$ ' + context.raw.toFixed(2);
+                        return ' ' + formatCurrency(context.raw);
                     }
                 }
             }
@@ -272,7 +273,7 @@ export default function Dashboard() {
                         <DollarSign size={20} color="var(--success)" />
                     </div>
                     <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0 }}>
-                        R$ {metrics.periodRev.toFixed(2)}
+                        {formatCurrency(metrics.periodRev)}
                     </p>
                 </div>
 
@@ -292,7 +293,7 @@ export default function Dashboard() {
                         <TrendingUp size={20} color="#3b82f6" />
                     </div>
                     <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0 }}>
-                        R$ {metrics.avgTicket.toFixed(2)}
+                        {formatCurrency(metrics.avgTicket)}
                     </p>
                 </div>
 
@@ -302,7 +303,7 @@ export default function Dashboard() {
                         <Award size={20} color="#f59e0b" />
                     </div>
                     <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0 }}>
-                        R$ {metrics.maxSale.toFixed(2)}
+                        {formatCurrency(metrics.maxSale)}
                     </p>
                 </div>
 

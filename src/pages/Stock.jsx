@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { RefreshCw, PackagePlus, AlertCircle } from 'lucide-react';
+import { formatCurrency } from '../utils';
 
 export default function Stock() {
     const [products, setProducts] = useState([]);
@@ -189,7 +190,7 @@ export default function Stock() {
                                             </span>
                                         </td>
                                         <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: 600, color: '#0f172a' }}>
-                                            R$ {(p.totalValue || 0).toFixed(2)}
+                                            {formatCurrency(p.totalValue || 0)}
                                         </td>
                                     </tr>
                                 ))
@@ -305,7 +306,7 @@ export default function Stock() {
                                 <div className="flex items-center gap-3">
                                     <div style={{ textAlign: 'right' }}>
                                         <p className="text-bold" style={{ margin: 0 }}>{m.quantity} un.</p>
-                                        <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>R$ {parseFloat(m.value || 0).toFixed(2)}</p>
+                                        <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>{formatCurrency(m.value || 0)}</p>
                                     </div>
                                     <div className="flex flex-col gap-2">
                                         <button className="btn-icon-only text-primary" style={{ padding: '4px', minWidth: '30px', minHeight: '30px', background: '#f3e8ff', border: 'none', cursor: 'pointer' }} onClick={() => handleEdit(m)}>✏️</button>
