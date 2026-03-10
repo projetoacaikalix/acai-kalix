@@ -228,47 +228,30 @@ export default function Stock() {
                 {loading ? (
                     <div className="text-center p-4"><RefreshCw className="animate-spin" /></div>
                 ) : (
-                    <div className="table-wrapper mt-4">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Produto</th>
-                                    <th>Tipo</th>
-                                    <th>Qtd</th>
-                                    <th>Valor Estimado</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {movements.length === 0 && (
-                                    <tr><td colSpan="6" className="text-center text-muted">Ainda não há movimentações</td></tr>
-                                )}
-                                {movements.map(m => (
-                                    <tr key={m.id}>
-                                        <td>{new Date(m.created_at).toLocaleString('pt-BR')}</td>
-                                        <td className="text-bold">{m.products?.name}</td>
-                                        <td>
-                                            <span className={`badge ${m.type === 'in' ? 'badge-success' : 'badge-warning'}`}>
-                                                {m.type === 'in' ? 'Entrada (+)' : 'Saída (-)'}
-                                            </span>
-                                        </td>
-                                        <td className="text-bold">{m.quantity}</td>
-                                        <td className="text-muted">R$ {parseFloat(m.value || 0).toFixed(2)}</td>
-                                        <td>
-                                            <div className="flex gap-2">
-                                                <button className="btn-icon-only text-primary" style={{ minHeight: '32px', minWidth: '32px', padding: '6px', background: '#f3e8ff', border: 'none', cursor: 'pointer' }} onClick={() => handleEdit(m)}>
-                                                    ✏️
-                                                </button>
-                                                <button className="btn-icon-only text-danger" style={{ minHeight: '32px', minWidth: '32px', padding: '6px', background: '#fee2e2', border: 'none', cursor: 'pointer' }} onClick={() => handleDelete(m.id)}>
-                                                    🗑️
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="mt-4" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {movements.length === 0 && (
+                            <p className="text-center text-muted">Ainda não há movimentações</p>
+                        )}
+                        {movements.map(m => (
+                            <div key={m.id} className="flex justify-between items-center p-3" style={{ background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                <div>
+                                    <p className="text-bold" style={{ fontSize: '0.9rem', margin: '0 0 4px 0' }}>{m.products?.name}</p>
+                                    <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>
+                                        {new Date(m.created_at).toLocaleString('pt-BR')} • <span className={`badge ${m.type === 'in' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '9px', marginLeft: '4px' }}>{m.type === 'in' ? 'Entrada (+)' : 'Saída (-)'}</span>
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div style={{ textAlign: 'right' }}>
+                                        <p className="text-bold" style={{ margin: 0 }}>{m.quantity} un.</p>
+                                        <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>R$ {parseFloat(m.value || 0).toFixed(2)}</p>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <button className="btn-icon-only text-primary" style={{ padding: '4px', minWidth: '30px', minHeight: '30px', background: '#f3e8ff', border: 'none', cursor: 'pointer' }} onClick={() => handleEdit(m)}>✏️</button>
+                                        <button className="btn-icon-only text-danger" style={{ padding: '4px', minWidth: '30px', minHeight: '30px', background: '#fee2e2', border: 'none', cursor: 'pointer' }} onClick={() => handleDelete(m.id)}>🗑️</button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>

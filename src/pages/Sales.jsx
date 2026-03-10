@@ -28,7 +28,11 @@ export default function Sales() {
 
         // Fetch recent sales for history
         const { data: sData } = await supabase.from('sales')
-            .select('*, clients(name)')
+            .select(`
+                *, 
+                clients(name),
+                sale_items(quantity, products(name))
+            `)
             .order('created_at', { ascending: false })
             .limit(10);
 
@@ -278,14 +282,17 @@ export default function Sales() {
                         <div key={sale.id} className="flex justify-between items-center p-3" style={{ background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                             <div>
                                 <p className="text-bold" style={{ fontSize: '0.9rem', margin: '0 0 4px 0' }}>{sale.clients?.name || 'Avulso'}</p>
+                                <p className="text-muted" style={{ fontSize: '0.8rem', margin: '0 0 4px 0', color: '#64748b' }}>
+                                    {sale.sale_items?.map(i => `${i.quantity}x ${i.products?.name}`).join(', ')}
+                                </p>
                                 <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>
                                     {new Date(sale.created_at).toLocaleString('pt-BR')} • <span className="badge badge-primary" style={{ fontSize: '10px' }}>{sale.payment_method}</span>
                                 </p>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-bold text-success">R$ {parseFloat(sale.total).toFixed(2)}</span>
-                                <button className="btn-icon-only text-primary" style={{ background: '#f3e8ff', border: 'none', cursor: 'pointer', padding: '6px', minWidth: '32px', minHeight: '32px' }} onClick={() => handleEditSale(sale)}>
-                                    ✏️
+                            <div className="flex flex-col items-end gap-2">
+                                <span className="text-bold text-success" style={{ fontSize: '1.1rem' }}>R$ {parseFloat(sale.total).toFixed(2)}</span>
+                                <button className="btn-icon-only text-primary" style={{ background: '#f3e8ff', border: 'none', cursor: 'pointer', padding: '6px', minWidth: '36px', minHeight: '36px' }} onClick={() => handleEditSale(sale)}>
+                                    ✏️ Editar
                                 </button>
                             </div>
                         </div>
