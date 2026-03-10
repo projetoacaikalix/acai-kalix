@@ -41,6 +41,7 @@ CREATE TABLE stock_movements (
   product_id UUID REFERENCES products(id),
   type TEXT NOT NULL CHECK (type IN ('in', 'out')),
   quantity INT NOT NULL,
+  value DECIMAL(10, 2) DEFAULT 0.00,
   reason TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

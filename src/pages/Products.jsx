@@ -137,14 +137,7 @@ export default function Products() {
                             <input type="text" name="name" value={formData.name} onChange={handleInputChange} className="input-field" required />
                         </div>
 
-                        <div className="form-group">
-                            <label>Categoria</label>
-                            <select name="category" value={formData.category} onChange={handleInputChange} className="select-field">
-                                <option value="Açaí">Açaí</option>
-                                <option value="Complementos">Complementos</option>
-                                <option value="Bebidas">Bebidas</option>
-                            </select>
-                        </div>
+                        {/* Categoria e Estoque foram ocultados e fixados em Açaí e 0 internamente */}
 
                         <div className="form-group">
                             <label>Preço de Venda (R$)</label>
@@ -156,10 +149,7 @@ export default function Products() {
                             <input type="number" step="0.01" name="cost" value={formData.cost} onChange={handleInputChange} className="input-field" required />
                         </div>
 
-                        <div className="form-group">
-                            <label>Estoque Atual</label>
-                            <input type="number" name="stock" value={formData.stock} onChange={handleInputChange} className="input-field" required />
-                        </div>
+
 
                         <div className="form-group">
                             <label>URL da Foto (opcional)</label>
@@ -201,10 +191,8 @@ export default function Products() {
                                         <h3>{p.name}</h3>
                                         <p className="flex items-center gap-2">
                                             <span className={`badge ${p.status ? 'badge-success' : 'badge-danger'}`}>{p.status ? 'Ativo' : 'Inativo'}</span>
-                                            <span className="badge badge-primary">{p.category}</span>
                                             <span className="text-bold">R$ {parseFloat(p.price).toFixed(2)}</span>
                                         </p>
-                                        <p className={p.stock <= 5 ? 'text-danger text-bold' : ''}>Estoque: {p.stock} un.</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">

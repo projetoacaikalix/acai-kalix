@@ -14,32 +14,34 @@ export default function Sales() {
     const [paymentMethod, setPaymentMethod] = useState('Pix');
     const [cart, setCart] = useState([]);
 
+    const [recentSales, setRecentSales] = useState([]);
+    const [editingSaleId, setEditingSaleId] = useState(null);
+
     useEffect(() => {
         fetchInitialData();
     }, []);
 
     const fetchInitialData = async () => {
         setLoading(true);
-        const { data: pData } = await supabase.from('products').select('*').eq('status', true).order('name');
+        const { data: pData } = await supabase.from('products').select('*').eq('status', true).eq('category', 'Açaí').order('name');
         const { data: cData } = await supabase.from('clients').select('id, name').order('name');
+
+        // Fetch recent sales for history
+        const { data: sData } = await supabase.from('sales')
+            .select('*, clients(name)')
+            .order('created_at', { ascending: false })
+            .limit(10);
 
         setProducts(pData || []);
         setClients(cData || []);
+        setRecentSales(sData || []);
         setLoading(false);
     };
 
     const addToCart = (product) => {
-        if (product.stock <= 0) {
-            alert('Produto esgotado no estoque!');
-            return;
-        }
         setCart(prev => {
             const existing = prev.find(item => item.id === product.id);
             if (existing) {
-                if (existing.qty >= product.stock) {
-                    alert('Quantidade máxima no estoque atingida.');
-                    return prev;
-                }
                 return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
             }
             return [...prev, { ...product, qty: 1 }];
@@ -52,12 +54,6 @@ export default function Sales() {
             if (!existing) return prev;
 
             const newQty = existing.qty + delta;
-
-            if (delta > 0 && newQty > existing.stock) {
-                alert('Quantidade máxima no estoque atingida.');
-                return prev;
-            }
-
             const updated = prev.map(item => item.id === id ? { ...item, qty: newQty } : item);
             return updated.filter(item => item.qty > 0);
         });
@@ -74,44 +70,50 @@ export default function Sales() {
         setIsSubmitting(true);
 
         try {
-            // 1. Insert Sale
-            const { data: saleData, error: saleError } = await supabase.from('sales').insert([{
-                client_id: selectedClient || null,
-                total: totalCart,
-                payment_method: paymentMethod
-            }]).select();
+            if (editingSaleId) {
+                await supabase.from('sales').update({
+                    client_id: selectedClient || null,
+                    total: totalCart,
+                    payment_method: paymentMethod
+                }).eq('id', editingSaleId);
 
-            if (saleError) throw saleError;
-            const saleId = saleData[0].id;
+                await supabase.from('sale_items').delete().eq('sale_id', editingSaleId);
 
-            // 2. Insert Sale Items, Update Stock, Create Stock Movements
-            for (const item of cart) {
-                // Items
-                await supabase.from('sale_items').insert([{
-                    sale_id: saleId,
-                    product_id: item.id,
-                    quantity: item.qty,
-                    price: item.price
-                }]);
+                for (const item of cart) {
+                    await supabase.from('sale_items').insert([{
+                        sale_id: editingSaleId,
+                        product_id: item.id,
+                        quantity: item.qty,
+                        price: item.price
+                    }]);
+                }
+                setSuccessMsg('Venda atualizada com sucesso!');
+                setEditingSaleId(null);
+            } else {
+                const { data: saleData, error: saleError } = await supabase.from('sales').insert([{
+                    client_id: selectedClient || null,
+                    total: totalCart,
+                    payment_method: paymentMethod
+                }]).select();
 
-                // Stock Output Move
-                await supabase.from('stock_movements').insert([{
-                    product_id: item.id,
-                    type: 'out',
-                    quantity: item.qty,
-                    reason: `Venda #${saleId.slice(0, 8)}`
-                }]);
+                if (saleError) throw saleError;
+                const saleId = saleData[0].id;
 
-                // Update product table stock
-                await supabase.from('products').update({ stock: item.stock - item.qty }).eq('id', item.id);
+                for (const item of cart) {
+                    await supabase.from('sale_items').insert([{
+                        sale_id: saleId,
+                        product_id: item.id,
+                        quantity: item.qty,
+                        price: item.price
+                    }]);
+                }
+                setSuccessMsg('Venda registrada com sucesso!');
             }
 
-            setSuccessMsg('Venda registrada com sucesso!');
-
-            // Reset
             setCart([]);
             setSelectedClient('');
-            fetchInitialData(); // refetch products to get updated stock
+            setPaymentMethod('Pix');
+            fetchInitialData();
 
             setTimeout(() => setSuccessMsg(''), 3000);
 
@@ -123,12 +125,37 @@ export default function Sales() {
         }
     };
 
+    const handleEditSale = async (sale) => {
+        setEditingSaleId(sale.id);
+        setSelectedClient(sale.client_id || '');
+        setPaymentMethod(sale.payment_method);
+
+        const { data: items } = await supabase.from('sale_items').select('*, products(name, image_url)').eq('sale_id', sale.id);
+        if (items) {
+            setCart(items.map(i => ({
+                id: i.product_id,
+                name: i.products?.name,
+                price: parseFloat(i.price),
+                qty: i.quantity,
+                image_url: i.products?.image_url
+            })));
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const cancelEdit = () => {
+        setEditingSaleId(null);
+        setCart([]);
+        setSelectedClient('');
+        setPaymentMethod('Pix');
+    };
+
     return (
         <div className="container animate-fade-in">
             <div className="flex justify-between items-center mb-4">
                 <div>
-                    <h1>Caixa / Nova Venda</h1>
-                    <p className="text-muted">Atendimento rápido</p>
+                    <h1>{editingSaleId ? 'Editando Venda' : 'Caixa / Nova Venda'}</h1>
+                    <p className="text-muted">{editingSaleId ? 'Alterando pedido existente' : 'Atendimento rápido'}</p>
                 </div>
             </div>
 
@@ -162,7 +189,6 @@ export default function Sales() {
                                     )}
                                     <h3 style={{ fontSize: '0.9rem', marginBottom: '4px' }}>{p.name}</h3>
                                     <p className="text-bold text-primary" style={{ fontSize: '1.1rem' }}>R$ {p.price.toFixed(2)}</p>
-                                    <p className="text-muted" style={{ fontSize: '0.75rem' }}>Estoque: {p.stock}</p>
                                 </div>
                             ))}
                         </div>
@@ -232,9 +258,48 @@ export default function Sales() {
                         </span>
                     </div>
 
-                    <button className="btn btn-primary btn-block" style={{ height: '60px', fontSize: '1.2rem' }} onClick={confirmSale} disabled={cart.length === 0 || isSubmitting}>
-                        {isSubmitting ? <RefreshCw className="animate-spin" /> : 'Finalizar Venda'}
+                    <button className="btn btn-primary btn-block" style={{ height: '60px', fontSize: '1.2rem', marginBottom: editingSaleId ? '8px' : '0' }} onClick={confirmSale} disabled={cart.length === 0 || isSubmitting}>
+                        {isSubmitting ? <RefreshCw className="animate-spin" /> : (editingSaleId ? 'Salvar Alterações' : 'Finalizar Venda')}
                     </button>
+                    {editingSaleId && (
+                        <button className="btn btn-outline btn-block" onClick={cancelEdit}>Cancelar Edição</button>
+                    )}
+                </div>
+            </div>
+
+            {/* Histórico de Vendas Recentes */}
+            <div className="card mt-4">
+                <h2>Histórico de Vendas</h2>
+                <div className="table-wrapper mt-4">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>Método</th>
+                                <th>Total</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {recentSales.length === 0 && (
+                                <tr><td colSpan="5" className="text-center text-muted">Sem vendas recentes</td></tr>
+                            )}
+                            {recentSales.map(sale => (
+                                <tr key={sale.id}>
+                                    <td>{new Date(sale.created_at).toLocaleString('pt-BR')}</td>
+                                    <td>{sale.clients?.name || 'Avulso'}</td>
+                                    <td><span className="badge badge-primary">{sale.payment_method}</span></td>
+                                    <td className="text-bold text-success">R$ {parseFloat(sale.total).toFixed(2)}</td>
+                                    <td>
+                                        <button className="btn-icon-only text-primary" style={{ background: '#f3e8ff', border: 'none', cursor: 'pointer' }} onClick={() => handleEditSale(sale)}>
+                                            ✏️
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

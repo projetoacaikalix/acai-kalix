@@ -9,12 +9,12 @@ export default function Stock() {
     const [isFormOpen, setIsFormOpen] = useState(false);
 
     const [formData, setFormData] = useState({
-        product_id: '',
+        product_name: '',
         quantity: '',
-        reason: 'Reposição'
+        value: '',
+        type: 'in'
     });
     const [editingId, setEditingId] = useState(null);
-    const [editingType, setEditingType] = useState('in');
 
     useEffect(() => {
         fetchData();
@@ -22,8 +22,8 @@ export default function Stock() {
 
     const fetchData = async () => {
         setLoading(true);
-        // Fetch products
-        const { data: pData } = await supabase.from('products').select('id, name, stock').eq('status', true).order('name');
+        // Fetch products (apenas Componentes)
+        const { data: pData } = await supabase.from('products').select('id, name, stock').eq('status', true).eq('category', 'Componentes').order('name');
         setProducts(pData || []);
 
         // Fetch movements
@@ -36,6 +36,7 @@ export default function Stock() {
         e.preventDefault();
         setLoading(true);
         const qty = parseInt(formData.quantity, 10);
+        const val = parseFloat(formData.value) || 0;
 
         if (qty <= 0) {
             alert('Quantidade deve ser maior que zero.');
@@ -45,26 +46,48 @@ export default function Stock() {
 
         try {
             if (editingId) {
-                // Ao editar, precisamos calcular a diferença na quantidade de estoque se o produto continua o mesmo, 
-                // para simplificar apenas atualizamos o registro pois recálculo complexo de estoque exige lógica maior
                 await supabase.from('stock_movements').update({
-                    product_id: formData.product_id,
                     quantity: qty,
-                    reason: formData.reason
+                    value: val,
+                    type: formData.type
                 }).eq('id', editingId);
             } else {
-                // Registrar movimento de entrada novo
-                await supabase.from('stock_movements').insert([{
-                    product_id: formData.product_id,
-                    type: 'in',
-                    quantity: qty,
-                    reason: formData.reason
-                }]);
+                let currentProductId = null;
+                // Buscar se o componente já existe
+                const { data: existingProdArr } = await supabase.from('products')
+                    .select('id, stock')
+                    .ilike('name', formData.product_name)
+                    .eq('category', 'Componentes');
 
-                // Atualizar o estoque atual do produto apenas na criacao nova
-                const prod = products.find(p => p.id === formData.product_id);
-                if (prod) {
-                    await supabase.from('products').update({ stock: prod.stock + qty }).eq('id', prod.id);
+                const existingProd = existingProdArr && existingProdArr.length > 0 ? existingProdArr[0] : null;
+
+                if (existingProd) {
+                    currentProductId = existingProd.id;
+                    const newStock = formData.type === 'in' ? existingProd.stock + qty : existingProd.stock - qty;
+                    await supabase.from('products').update({ stock: newStock }).eq('id', currentProductId);
+                } else {
+                    const newStock = formData.type === 'in' ? qty : -qty;
+                    const { data: newProd } = await supabase.from('products').insert([{
+                        name: formData.product_name,
+                        category: 'Componentes',
+                        price: 0,
+                        cost: 0,
+                        stock: newStock
+                    }]).select();
+
+                    if (newProd && newProd.length > 0) {
+                        currentProductId = newProd[0].id;
+                    }
+                }
+
+                if (currentProductId) {
+                    await supabase.from('stock_movements').insert([{
+                        product_id: currentProductId,
+                        type: formData.type,
+                        quantity: qty,
+                        value: val,
+                        reason: 'Movimentação via Estoque'
+                    }]);
                 }
             }
 
@@ -77,12 +100,12 @@ export default function Stock() {
 
     const handleEdit = (movement) => {
         setFormData({
-            product_id: movement.product_id,
+            product_name: movement.products?.name || '',
             quantity: movement.quantity,
-            reason: movement.reason || ''
+            value: movement.value || '',
+            type: movement.type
         });
         setEditingId(movement.id);
-        setEditingType(movement.type);
         setIsFormOpen(true);
     };
 
@@ -95,9 +118,8 @@ export default function Stock() {
     };
 
     const resetForm = () => {
-        setFormData({ product_id: '', quantity: '', reason: 'Reposição' });
+        setFormData({ product_name: '', quantity: '', value: '', type: 'in' });
         setEditingId(null);
-        setEditingType('in');
         setIsFormOpen(false);
     };
 
@@ -120,22 +142,32 @@ export default function Stock() {
                     <h2>{editingId ? 'Editar Movimentação' : 'Registrar Entrada de Estoque'}</h2>
                     <form onSubmit={handleSubmit} className="grid-2 mt-4">
                         <div className="form-group">
-                            <label>Produto</label>
+                            <label>Nome do Insumo / Componente</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                value={formData.product_name}
+                                onChange={e => setFormData({ ...formData, product_name: e.target.value })}
+                                disabled={editingId !== null} // não permite alterar o produto na edicao simples
+                                placeholder="Ex: Copo 300ml, Granola"
+                                required
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Tipo de Movimentação</label>
                             <select
                                 className="select-field"
-                                value={formData.product_id}
-                                onChange={e => setFormData({ ...formData, product_id: e.target.value })}
-                                required
+                                value={formData.type}
+                                onChange={e => setFormData({ ...formData, type: e.target.value })}
                             >
-                                <option value="">Selecione um produto</option>
-                                {products.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} (Atual: {p.stock})</option>
-                                ))}
+                                <option value="in">Entrada (+)</option>
+                                <option value="out">Saída (-)</option>
                             </select>
                         </div>
 
                         <div className="form-group">
-                            <label>Quantidade a adicionar</label>
+                            <label>Quantidade</label>
                             <input
                                 type="number"
                                 className="input-field"
@@ -147,13 +179,14 @@ export default function Stock() {
                         </div>
 
                         <div className="form-group">
-                            <label>Motivo</label>
+                            <label>Valor Total (R$) - Opcional</label>
                             <input
-                                type="text"
+                                type="number"
+                                step="0.01"
                                 className="input-field"
-                                value={formData.reason}
-                                onChange={e => setFormData({ ...formData, reason: e.target.value })}
-                                required
+                                value={formData.value}
+                                onChange={e => setFormData({ ...formData, value: e.target.value })}
+                                placeholder="0.00"
                             />
                         </div>
 
@@ -203,7 +236,7 @@ export default function Stock() {
                                     <th>Produto</th>
                                     <th>Tipo</th>
                                     <th>Qtd</th>
-                                    <th>Motivo</th>
+                                    <th>Valor Estimado</th>
                                     <th>Ações</th>
                                 </tr>
                             </thead>
@@ -217,11 +250,11 @@ export default function Stock() {
                                         <td className="text-bold">{m.products?.name}</td>
                                         <td>
                                             <span className={`badge ${m.type === 'in' ? 'badge-success' : 'badge-warning'}`}>
-                                                {m.type === 'in' ? 'Entrada' : 'Saída'}
+                                                {m.type === 'in' ? 'Entrada (+)' : 'Saída (-)'}
                                             </span>
                                         </td>
                                         <td className="text-bold">{m.quantity}</td>
-                                        <td>{m.reason || (m.type === 'out' ? 'Venda' : '-')}</td>
+                                        <td className="text-muted">R$ {parseFloat(m.value || 0).toFixed(2)}</td>
                                         <td>
                                             <div className="flex gap-2">
                                                 <button className="btn-icon-only text-primary" style={{ minHeight: '32px', minWidth: '32px', padding: '6px', background: '#f3e8ff', border: 'none', cursor: 'pointer' }} onClick={() => handleEdit(m)}>
