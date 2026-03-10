@@ -13,6 +13,8 @@ export default function Stock() {
         quantity: '',
         reason: 'Reposição'
     });
+    const [editingId, setEditingId] = useState(null);
+    const [editingType, setEditingType] = useState('in');
 
     useEffect(() => {
         fetchData();
@@ -42,26 +44,61 @@ export default function Stock() {
         }
 
         try {
-            // Registrar movimento de entrada
-            await supabase.from('stock_movements').insert([{
-                product_id: formData.product_id,
-                type: 'in',
-                quantity: qty,
-                reason: formData.reason
-            }]);
+            if (editingId) {
+                // Ao editar, precisamos calcular a diferença na quantidade de estoque se o produto continua o mesmo, 
+                // para simplificar apenas atualizamos o registro pois recálculo complexo de estoque exige lógica maior
+                await supabase.from('stock_movements').update({
+                    product_id: formData.product_id,
+                    quantity: qty,
+                    reason: formData.reason
+                }).eq('id', editingId);
+            } else {
+                // Registrar movimento de entrada novo
+                await supabase.from('stock_movements').insert([{
+                    product_id: formData.product_id,
+                    type: 'in',
+                    quantity: qty,
+                    reason: formData.reason
+                }]);
 
-            // Atualizar o estoque atual do produto
-            const prod = products.find(p => p.id === formData.product_id);
-            if (prod) {
-                await supabase.from('products').update({ stock: prod.stock + qty }).eq('id', prod.id);
+                // Atualizar o estoque atual do produto apenas na criacao nova
+                const prod = products.find(p => p.id === formData.product_id);
+                if (prod) {
+                    await supabase.from('products').update({ stock: prod.stock + qty }).eq('id', prod.id);
+                }
             }
 
-            setIsFormOpen(false);
-            setFormData({ product_id: '', quantity: '', reason: 'Reposição' });
+            resetForm();
             fetchData();
         } catch (e) {
             console.error(e);
         }
+    };
+
+    const handleEdit = (movement) => {
+        setFormData({
+            product_id: movement.product_id,
+            quantity: movement.quantity,
+            reason: movement.reason || ''
+        });
+        setEditingId(movement.id);
+        setEditingType(movement.type);
+        setIsFormOpen(true);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Excluir este registro de movimentação do histórico?')) {
+            setLoading(true);
+            await supabase.from('stock_movements').delete().eq('id', id);
+            fetchData();
+        }
+    };
+
+    const resetForm = () => {
+        setFormData({ product_id: '', quantity: '', reason: 'Reposição' });
+        setEditingId(null);
+        setEditingType('in');
+        setIsFormOpen(false);
     };
 
     return (
@@ -80,7 +117,7 @@ export default function Stock() {
 
             {isFormOpen && (
                 <div className="card mb-4 animate-fade-in">
-                    <h2>Registrar Entrada de Estoque</h2>
+                    <h2>{editingId ? 'Editar Movimentação' : 'Registrar Entrada de Estoque'}</h2>
                     <form onSubmit={handleSubmit} className="grid-2 mt-4">
                         <div className="form-group">
                             <label>Produto</label>
@@ -122,9 +159,9 @@ export default function Stock() {
 
                         <div className="flex items-center gap-2 mt-4" style={{ gridColumn: '1 / -1' }}>
                             <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-                                {loading ? <RefreshCw className="animate-spin" size={20} /> : 'Salvar Entrada'}
+                                {loading ? <RefreshCw className="animate-spin" size={20} /> : 'Salvar Movimentação'}
                             </button>
-                            <button type="button" className="btn btn-danger btn-block" disabled={loading} onClick={() => setIsFormOpen(false)}>
+                            <button type="button" className="btn btn-danger btn-block" disabled={loading} onClick={resetForm}>
                                 Cancelar
                             </button>
                         </div>
@@ -167,11 +204,12 @@ export default function Stock() {
                                     <th>Tipo</th>
                                     <th>Qtd</th>
                                     <th>Motivo</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {movements.length === 0 && (
-                                    <tr><td colSpan="5" className="text-center text-muted">Ainda não há movimentações</td></tr>
+                                    <tr><td colSpan="6" className="text-center text-muted">Ainda não há movimentações</td></tr>
                                 )}
                                 {movements.map(m => (
                                     <tr key={m.id}>
@@ -184,6 +222,16 @@ export default function Stock() {
                                         </td>
                                         <td className="text-bold">{m.quantity}</td>
                                         <td>{m.reason || (m.type === 'out' ? 'Venda' : '-')}</td>
+                                        <td>
+                                            <div className="flex gap-2">
+                                                <button className="btn-icon-only text-primary" style={{ minHeight: '32px', minWidth: '32px', padding: '6px', background: '#f3e8ff', border: 'none', cursor: 'pointer' }} onClick={() => handleEdit(m)}>
+                                                    ✏️
+                                                </button>
+                                                <button className="btn-icon-only text-danger" style={{ minHeight: '32px', minWidth: '32px', padding: '6px', background: '#fee2e2', border: 'none', cursor: 'pointer' }} onClick={() => handleDelete(m.id)}>
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

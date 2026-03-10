@@ -11,6 +11,7 @@ export default function Clients() {
         name: '',
         phone: ''
     });
+    const [editingId, setEditingId] = useState(null);
 
     useEffect(() => {
         fetchClients();
@@ -55,15 +56,46 @@ export default function Clients() {
         e.preventDefault();
         setLoading(true);
 
-        const { error } = await supabase.from('clients').insert([formData]);
-        if (!error) {
-            setIsFormOpen(false);
-            setFormData({ name: '', phone: '' });
-            fetchClients();
+        if (editingId) {
+            const { error } = await supabase.from('clients').update(formData).eq('id', editingId);
+            if (!error) {
+                setIsFormOpen(false);
+                setFormData({ name: '', phone: '' });
+                setEditingId(null);
+                fetchClients();
+            }
         } else {
-            console.error(error);
+            const { error } = await supabase.from('clients').insert([formData]);
+            if (!error) {
+                setIsFormOpen(false);
+                setFormData({ name: '', phone: '' });
+                fetchClients();
+            }
         }
         setLoading(false);
+    };
+
+    const handleEdit = (client) => {
+        setFormData({
+            name: client.name,
+            phone: client.phone === 'Sem telefone' ? '' : client.phone
+        });
+        setEditingId(client.id);
+        setIsFormOpen(true);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Tem certeza que deseja excluir este cliente?')) {
+            setLoading(true);
+            await supabase.from('clients').delete().eq('id', id);
+            fetchClients();
+        }
+    };
+
+    const resetForm = () => {
+        setFormData({ name: '', phone: '' });
+        setEditingId(null);
+        setIsFormOpen(false);
     };
 
     return (
@@ -83,8 +115,8 @@ export default function Clients() {
             {isFormOpen && (
                 <div className="card mb-4 animate-fade-in">
                     <div className="flex justify-between items-center mb-4">
-                        <h2>Cadastrar Novo Cliente</h2>
-                        <button className="btn-icon-only text-muted" onClick={() => setIsFormOpen(false)} style={{ background: 'transparent', border: 'none' }}>
+                        <h2>{editingId ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}</h2>
+                        <button className="btn-icon-only text-muted" onClick={resetForm} style={{ background: 'transparent', border: 'none' }}>
                             <X size={24} />
                         </button>
                     </div>
@@ -94,8 +126,8 @@ export default function Clients() {
                             <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="input-field" required />
                         </div>
                         <div className="form-group">
-                            <label>Telefone / WhatsApp</label>
-                            <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="input-field" placeholder="(00) 00000-0000" required />
+                            <label>Telefone / WhatsApp (Opcional)</label>
+                            <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="input-field" placeholder="(00) 00000-0000" />
                         </div>
 
                         <div className="form-group" style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
@@ -123,12 +155,22 @@ export default function Clients() {
                                             <h3 style={{ margin: 0, fontSize: '1rem' }} className="text-bold">{c.name}</h3>
                                             <p style={{ margin: 0, fontSize: '0.85rem' }} className="text-muted">{c.phone}</p>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="flex gap-2">
+                                            <button className="btn-icon-only text-primary" style={{ minHeight: '32px', minWidth: '32px', padding: '6px', background: '#f3e8ff', border: 'none', cursor: 'pointer' }} onClick={() => handleEdit(c)}>
+                                                ✏️
+                                            </button>
+                                            <button className="btn-icon-only text-danger" style={{ minHeight: '32px', minWidth: '32px', padding: '6px', background: '#fee2e2', border: 'none', cursor: 'pointer' }} onClick={() => handleDelete(c.id)}>
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center" style={{ marginTop: '8px', marginBottom: '8px' }}>
+                                        <div className="text-left">
                                             <p style={{ margin: 0, color: 'var(--success)', fontWeight: 'bold', fontSize: '1.1rem' }}>R$ {c.totalSpent.toFixed(2)}</p>
                                             <p style={{ margin: 0, fontSize: '0.75rem' }} className="text-muted">{c.totalPurchases} compras</p>
                                         </div>
                                     </div>
-                                    <div className="flex justify-between" style={{ fontSize: '0.85rem', background: '#f9fafb', padding: '12px', borderRadius: '8px', marginTop: '12px' }}>
+                                    <div className="flex justify-between" style={{ fontSize: '0.85rem', background: '#f9fafb', padding: '12px', borderRadius: '8px' }}>
                                         <span>Ticket Médio: <strong style={{ color: 'var(--text-main)' }}>R$ {c.avgTicket.toFixed(2)}</strong></span>
                                         <span>Última: <strong style={{ color: 'var(--text-main)' }}>{c.lastPurchase}</strong></span>
                                     </div>
