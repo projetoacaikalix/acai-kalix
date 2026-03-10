@@ -194,12 +194,8 @@ export default function Products() {
                         {products.map(p => (
                             <div key={p.id} className="product-list-card">
                                 <div className="p-info flex items-center gap-4">
-                                    {p.image_url ? (
+                                    {p.image_url && (
                                         <img src={p.image_url} alt={p.name} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }} />
-                                    ) : (
-                                        <div style={{ width: '48px', height: '48px', borderRadius: '8px', backgroundColor: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b21a8', fontWeight: 'bold' }}>
-                                            {p.name.charAt(0)}
-                                        </div>
                                     )}
                                     <div>
                                         <h3>{p.name}</h3>

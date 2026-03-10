@@ -71,7 +71,7 @@ export default function Clients() {
             <div className="flex justify-between items-center mb-4">
                 <div>
                     <h1>Clientes</h1>
-                    <p className="text-muted">Sua base de clientes VIP</p>
+                    <p className="text-muted">Sua base de clientes</p>
                 </div>
                 {!isFormOpen && (
                     <button className="btn btn-primary" onClick={() => setIsFormOpen(true)}>
@@ -112,33 +112,29 @@ export default function Clients() {
                     <div className="text-center p-4"><RefreshCw className="animate-spin" size={24} /></div>
                 ) : (
                     <div className="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Cliente</th>
-                                    <th>Telefone</th>
-                                    <th>Qtd Compras</th>
-                                    <th>Valor Gasto</th>
-                                    <th>Ticket Médio</th>
-                                    <th>Última Compra</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {clients.length === 0 && (
-                                    <tr><td colSpan="6" className="text-center text-muted">Ainda não há clientes cadastrados.</td></tr>
-                                )}
-                                {clients.map(c => (
-                                    <tr key={c.id}>
-                                        <td className="text-bold">{c.name}</td>
-                                        <td>{c.phone}</td>
-                                        <td>{c.totalPurchases}</td>
-                                        <td className="text-bold" style={{ color: 'var(--success)' }}>R$ {c.totalSpent.toFixed(2)}</td>
-                                        <td>R$ {c.avgTicket.toFixed(2)}</td>
-                                        <td>{c.lastPurchase}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <div className="clients-list">
+                            {clients.length === 0 && (
+                                <p className="text-center text-muted p-4">Ainda não há clientes cadastrados.</p>
+                            )}
+                            {clients.map(c => (
+                                <div key={c.id} className="client-card" style={{ padding: '16px', borderBottom: '1px solid #eee' }}>
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 style={{ margin: 0, fontSize: '1rem' }} className="text-bold">{c.name}</h3>
+                                            <p style={{ margin: 0, fontSize: '0.85rem' }} className="text-muted">{c.phone}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p style={{ margin: 0, color: 'var(--success)', fontWeight: 'bold', fontSize: '1.1rem' }}>R$ {c.totalSpent.toFixed(2)}</p>
+                                            <p style={{ margin: 0, fontSize: '0.75rem' }} className="text-muted">{c.totalPurchases} compras</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between" style={{ fontSize: '0.85rem', background: '#f9fafb', padding: '12px', borderRadius: '8px', marginTop: '12px' }}>
+                                        <span>Ticket Médio: <strong style={{ color: 'var(--text-main)' }}>R$ {c.avgTicket.toFixed(2)}</strong></span>
+                                        <span>Última: <strong style={{ color: 'var(--text-main)' }}>{c.lastPurchase}</strong></span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

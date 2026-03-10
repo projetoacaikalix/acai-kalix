@@ -29,9 +29,17 @@ export default function Sales() {
     };
 
     const addToCart = (product) => {
+        if (product.stock <= 0) {
+            alert('Produto esgotado no estoque!');
+            return;
+        }
         setCart(prev => {
             const existing = prev.find(item => item.id === product.id);
             if (existing) {
+                if (existing.qty >= product.stock) {
+                    alert('Quantidade máxima no estoque atingida.');
+                    return prev;
+                }
                 return prev.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item);
             }
             return [...prev, { ...product, qty: 1 }];
@@ -40,7 +48,17 @@ export default function Sales() {
 
     const updateCartQty = (id, delta) => {
         setCart(prev => {
-            const updated = prev.map(item => item.id === id ? { ...item, qty: item.qty + delta } : item);
+            const existing = prev.find(item => item.id === id);
+            if (!existing) return prev;
+
+            const newQty = existing.qty + delta;
+
+            if (delta > 0 && newQty > existing.stock) {
+                alert('Quantidade máxima no estoque atingida.');
+                return prev;
+            }
+
+            const updated = prev.map(item => item.id === id ? { ...item, qty: newQty } : item);
             return updated.filter(item => item.qty > 0);
         });
     };
@@ -139,12 +157,8 @@ export default function Sales() {
                                     onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
                                     onMouseOut={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
                                 >
-                                    {p.image_url ? (
+                                    {p.image_url && (
                                         <img src={p.image_url} alt={p.name} style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px', marginBottom: '8px' }} />
-                                    ) : (
-                                        <div style={{ width: '100%', height: '80px', borderRadius: '8px', backgroundColor: '#f3e8ff', color: '#7c43bd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '8px' }}>
-                                            {p.name.charAt(0)}
-                                        </div>
                                     )}
                                     <h3 style={{ fontSize: '0.9rem', marginBottom: '4px' }}>{p.name}</h3>
                                     <p className="text-bold text-primary" style={{ fontSize: '1.1rem' }}>R$ {p.price.toFixed(2)}</p>
