@@ -137,6 +137,34 @@ export default function Stock() {
                 )}
             </div>
 
+            {/* Visualização de Itens em Estoque */}
+            <div className="card mb-4" style={{ background: 'linear-gradient(to right, #f8fafc, #ffffff)', border: '1px solid #e2e8f0' }}>
+                <h2 style={{ fontSize: '1.1rem', marginBottom: '16px' }}>Visão Geral do Estoque</h2>
+                <div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
+                    {products.length === 0 ? (
+                        <p className="text-muted" style={{ gridColumn: '1 / -1', margin: 0 }}>Nenhum item em estoque.</p>
+                    ) : (
+                        products.map(p => (
+                            <div key={p.id} style={{
+                                padding: '12px',
+                                background: '#fff',
+                                borderRadius: '8px',
+                                border: '1px solid #cbd5e1',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '4px',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                            }}>
+                                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.name}>{p.name}</span>
+                                <span style={{ fontSize: '1.2rem', fontWeight: 700, color: p.stock <= 5 ? 'var(--danger)' : 'var(--primary)' }}>
+                                    {p.stock} <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#94a3b8' }}>un.</span>
+                                </span>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
             {isFormOpen && (
                 <div className="card mb-4 animate-fade-in">
                     <h2>{editingId ? 'Editar Movimentação' : 'Novo Registro'}</h2>
