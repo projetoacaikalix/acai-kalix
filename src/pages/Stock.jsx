@@ -168,9 +168,9 @@ export default function Stock() {
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
                             <tr style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.85rem', textTransform: 'uppercase' }}>
-                                <th style={{ padding: '12px 24px', borderBottom: '2px solid #e2e8f0' }}>Produto</th>
-                                <th style={{ padding: '12px 24px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Quantidade</th>
-                                <th style={{ padding: '12px 24px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Valor Acumulado (Entradas)</th>
+                                <th style={{ padding: '12px 16px', borderBottom: '2px solid #e2e8f0' }}>Produto</th>
+                                <th style={{ padding: '12px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Qtd</th>
+                                <th style={{ padding: '12px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Valor (Total)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -181,15 +181,15 @@ export default function Stock() {
                             ) : (
                                 products.map(p => (
                                     <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9', background: '#fff', transition: 'background 0.2s' }}>
-                                        <td style={{ padding: '16px 24px', fontWeight: 600, color: '#334155' }}>
+                                        <td style={{ padding: '12px 16px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
                                             {p.name}
                                         </td>
-                                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                                            <span style={{ fontSize: '1.05rem', fontWeight: 700, color: p.stock <= 5 ? 'var(--danger)' : 'var(--primary)' }}>
-                                                {p.stock} <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#94a3b8' }}>un.</span>
+                                        <td style={{ padding: '12px 16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                            <span style={{ fontSize: '1rem', fontWeight: 700, color: p.stock <= 5 ? 'var(--danger)' : 'var(--primary)' }}>
+                                                {p.stock} <span style={{ fontSize: '0.75rem', fontWeight: 400, color: '#94a3b8' }}>un.</span>
                                             </span>
                                         </td>
-                                        <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: 600, color: '#0f172a' }}>
+                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#0f172a', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
                                             {formatCurrency(p.totalValue || 0)}
                                         </td>
                                     </tr>
