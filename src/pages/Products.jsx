@@ -118,7 +118,7 @@ export default function Products() {
                 </div>
                 {!isFormOpen && (
                     <button className="btn btn-primary" onClick={() => setIsFormOpen(true)}>
-                        <Plus size={20} /> <span className="hide-mobile">Novo Registro</span>
+                        <Plus size={20} /> <span className="hide-mobile">Novo Produto</span>
                     </button>
                 )}
             </div>
@@ -126,7 +126,7 @@ export default function Products() {
             {isFormOpen && (
                 <div className="card mb-4 animate-fade-in">
                     <div className="flex justify-between items-center mb-4">
-                        <h2>{editingId ? 'Editar Registro' : 'Novo Registro'}</h2>
+                        <h2>{editingId ? 'Editar Produto' : 'Novo Produto'}</h2>
                         <button className="btn-icon-only text-muted" onClick={resetForm} style={{ background: 'transparent', border: 'none' }}>
                             <X size={24} />
                         </button>

@@ -132,14 +132,14 @@ export default function Stock() {
                 </div>
                 {!isFormOpen && (
                     <button className="btn btn-primary" onClick={() => setIsFormOpen(true)}>
-                        <PackagePlus size={20} /> <span className="hide-mobile">Nova Entrada</span>
+                        <PackagePlus size={20} /> <span className="hide-mobile">Novo Registro</span>
                     </button>
                 )}
             </div>
 
             {isFormOpen && (
                 <div className="card mb-4 animate-fade-in">
-                    <h2>{editingId ? 'Editar Movimentação' : 'Registrar Entrada de Estoque'}</h2>
+                    <h2>{editingId ? 'Editar Movimentação' : 'Novo Registro'}</h2>
                     <form onSubmit={handleSubmit} className="grid-2 mt-4">
                         <div className="form-group">
                             <label>Nome do Insumo / Componente</label>
