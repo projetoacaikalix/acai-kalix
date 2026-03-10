@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { TrendingUp, TrendingDown, DollarSign, ShoppingBag, AlertTriangle, Users } from 'lucide-react';
+import { TrendingUp, DollarSign, ShoppingBag, AlertTriangle, Users, Calendar, Award } from 'lucide-react';
 
 import {
     Chart as ChartJS,
@@ -28,12 +28,25 @@ ChartJS.register(
 
 export default function Dashboard() {
     const [loading, setLoading] = useState(true);
+    const getFirstDayOfMonth = () => {
+        const date = new Date();
+        return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+    };
+    const getLastDayOfMonth = () => {
+        const date = new Date();
+        return new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+    };
+
+    const [dateFilter, setDateFilter] = useState({
+        start: getFirstDayOfMonth(),
+        end: getLastDayOfMonth()
+    });
+
     const [metrics, setMetrics] = useState({
-        todayRev: 0,
-        weekRev: 0,
-        monthRev: 0,
+        periodRev: 0,
         totalSales: 0,
         avgTicket: 0,
+        maxSale: 0
     });
 
     const [lowStockProducts, setLowStockProducts] = useState([]);
@@ -42,37 +55,34 @@ export default function Dashboard() {
 
     useEffect(() => {
         fetchDashboardData();
-    }, []);
+    }, [dateFilter]);
 
     const fetchDashboardData = async () => {
         setLoading(true);
 
         try {
             // 1. Fetch Sales Data (mock implementation for visuals if DB empty)
-            const { data: sales, error: salesError } = await supabase.from('sales').select('*');
+            let salesQuery = supabase.from('sales').select('*');
+            if (dateFilter.start) salesQuery = salesQuery.gte('created_at', `${dateFilter.start}T00:00:00`);
+            if (dateFilter.end) salesQuery = salesQuery.lte('created_at', `${dateFilter.end}T23:59:59`);
 
-            let revToday = 0, revWeek = 0, revMonth = 0, total = 0;
-            const today = new Date();
+            const { data: sales, error: salesError } = await salesQuery;
 
+            let revTotal = 0, total = 0, max = 0;
             const mockedSales = salesError || !sales?.length ? [] : sales;
 
             mockedSales.forEach(sale => {
-                const saleDate = new Date(sale.created_at);
-                const dayDiff = Math.floor((today - saleDate) / (1000 * 60 * 60 * 24));
-
-                const val = parseFloat(sale.total);
-                if (dayDiff === 0) revToday += val;
-                if (dayDiff <= 7) revWeek += val;
-                if (dayDiff <= 30) revMonth += val;
+                const val = parseFloat(sale.total) || 0;
+                revTotal += val;
+                if (val > max) max = val;
                 total++;
             });
 
             setMetrics({
-                todayRev: revToday,
-                weekRev: revWeek,
-                monthRev: revMonth,
+                periodRev: revTotal,
                 totalSales: total,
-                avgTicket: total > 0 ? (revMonth / total) : 0,
+                avgTicket: total > 0 ? (revTotal / total) : 0,
+                maxSale: max
             });
 
             // 2. Fetch Stock Data
@@ -83,9 +93,11 @@ export default function Dashboard() {
 
             // Em um cenário real de banco, você faria uma query agrupa os produtos mais vendidos.
             // Para simplificar e resolver diretamente via RPC ou join via frontend:
-            const { data: saleItems } = await supabase
-                .from('sale_items')
-                .select('quantity, products!inner(name, category)');
+            let siQuery = supabase.from('sale_items').select('quantity, sales!inner(created_at), products!inner(name, category)');
+            if (dateFilter.start) siQuery = siQuery.gte('sales.created_at', `${dateFilter.start}T00:00:00`);
+            if (dateFilter.end) siQuery = siQuery.lte('sales.created_at', `${dateFilter.end}T23:59:59`);
+
+            const { data: saleItems } = await siQuery;
 
             if (saleItems) {
                 const productTotals = {};
@@ -108,15 +120,23 @@ export default function Dashboard() {
             }
 
             // 4. Fetch Top Clients
-            const { data: clientsData } = await supabase.from('clients').select(`
-                name,
-                sales (total)
-            `);
-            if (clientsData) {
-                const clientTotals = clientsData.map(c => {
-                    const totalSpent = c.sales.reduce((acc, s) => acc + parseFloat(s.total), 0);
-                    return { name: c.name, total: totalSpent };
-                }).filter(c => c.total > 0).sort((a, b) => b.total - a.total).slice(0, 5);
+            let clientsQuery = supabase.from('sales').select('total, clients!inner(name)');
+            if (dateFilter.start) clientsQuery = clientsQuery.gte('created_at', `${dateFilter.start}T00:00:00`);
+            if (dateFilter.end) clientsQuery = clientsQuery.lte('created_at', `${dateFilter.end}T23:59:59`);
+
+            const { data: clientSalesData } = await clientsQuery;
+            if (clientSalesData) {
+                const clientTotalsMap = {};
+                clientSalesData.forEach(sale => {
+                    if (sale.clients?.name) {
+                        clientTotalsMap[sale.clients.name] = (clientTotalsMap[sale.clients.name] || 0) + parseFloat(sale.total);
+                    }
+                });
+
+                const clientTotals = Object.keys(clientTotalsMap).map(name => ({
+                    name,
+                    total: clientTotalsMap[name]
+                })).sort((a, b) => b.total - a.total).slice(0, 5);
 
                 setTopClients({
                     labels: clientTotals.map(c => c.name),
@@ -199,46 +219,94 @@ export default function Dashboard() {
             <h1>Visão Geral</h1>
             <p className="text-muted mb-4">Acompanhe os resultados do Açai Kalix</p>
 
+            {/* Premium Date Filter */}
+            <div className="card mb-4" style={{
+                background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary-dark) 100%)',
+                color: '#fff',
+                padding: '24px',
+                border: 'none',
+                boxShadow: '0 4px 15px rgba(124, 67, 189, 0.3)'
+            }}>
+                <div className="flex items-center gap-3 mb-4">
+                    <Calendar size={28} color="#fbc02d" />
+                    <div>
+                        <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Filtrar Resultados</h3>
+                        <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.8 }}>Relatório financeiro e de vendas</p>
+                    </div>
+                </div>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: '1 1 120px' }}>
+                        <label style={{ fontSize: '0.75rem', opacity: 0.9, display: 'block', marginBottom: '6px' }}>Data Inicial</label>
+                        <input
+                            type="date"
+                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#fff', outline: 'none', colorScheme: 'dark' }}
+                            value={dateFilter.start}
+                            onChange={e => setDateFilter({ ...dateFilter, start: e.target.value })}
+                        />
+                    </div>
+                    <div style={{ flex: '1 1 120px' }}>
+                        <label style={{ fontSize: '0.75rem', opacity: 0.9, display: 'block', marginBottom: '6px' }}>Data Final</label>
+                        <input
+                            type="date"
+                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#fff', outline: 'none', colorScheme: 'dark' }}
+                            value={dateFilter.end}
+                            onChange={e => setDateFilter({ ...dateFilter, end: e.target.value })}
+                        />
+                    </div>
+                </div>
+                <div className="mt-4 flex gap-3">
+                    <button className="btn" style={{ flex: 1, background: '#fbc02d', color: '#000', border: 'none', fontSize: '0.9rem', fontWeight: 'bold' }} onClick={() => fetchDashboardData()}>
+                        Atualizar Dashboard
+                    </button>
+                    <button className="btn" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', fontSize: '0.9rem' }} onClick={() => {
+                        setDateFilter({ start: getFirstDayOfMonth(), end: getLastDayOfMonth() });
+                        setTimeout(fetchDashboardData, 100);
+                    }}>
+                        Mês Atual
+                    </button>
+                </div>
+            </div>
+
             {/* Metrics Row */}
-            <div className="grid-2 grid-4-desktop mb-4" style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-
-                <div className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
-                    <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-muted" style={{ fontSize: '0.9rem', margin: 0 }}>Faturamento (Hoje)</h3>
-                        <DollarSign size={20} color="var(--primary)" />
-                    </div>
-                    <p style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0 }}>
-                        R$ {metrics.todayRev.toFixed(2)}
-                    </p>
-                </div>
-
-                <div className="card" style={{ borderLeft: '4px solid var(--secondary-dark)' }}>
-                    <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-muted" style={{ fontSize: '0.9rem', margin: 0 }}>Faturamento (Semana)</h3>
-                        <TrendingUp size={20} color="var(--secondary-dark)" />
-                    </div>
-                    <p style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0 }}>
-                        R$ {metrics.weekRev.toFixed(2)}
-                    </p>
-                </div>
+            <div className="grid-2 grid-4-desktop mb-4" style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
 
                 <div className="card" style={{ borderLeft: '4px solid var(--success)' }}>
                     <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-muted" style={{ fontSize: '0.9rem', margin: 0 }}>Faturamento (Mês)</h3>
+                        <h3 className="text-muted" style={{ fontSize: '0.9rem', margin: 0 }}>Faturamento</h3>
                         <DollarSign size={20} color="var(--success)" />
                     </div>
-                    <p style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0 }}>
-                        R$ {metrics.monthRev.toFixed(2)}
+                    <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0 }}>
+                        R$ {metrics.periodRev.toFixed(2)}
+                    </p>
+                </div>
+
+                <div className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-muted" style={{ fontSize: '0.9rem', margin: 0 }}>Vendas (Qtd)</h3>
+                        <ShoppingBag size={20} color="var(--primary)" />
+                    </div>
+                    <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0 }}>
+                        {metrics.totalSales} <span style={{ fontSize: '1rem', color: '#666', fontWeight: 400 }}>pedidos</span>
                     </p>
                 </div>
 
                 <div className="card" style={{ borderLeft: '4px solid #3b82f6' }}>
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="text-muted" style={{ fontSize: '0.9rem', margin: 0 }}>Ticket Médio</h3>
-                        <ShoppingBag size={20} color="#3b82f6" />
+                        <TrendingUp size={20} color="#3b82f6" />
                     </div>
-                    <p style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0 }}>
+                    <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0 }}>
                         R$ {metrics.avgTicket.toFixed(2)}
+                    </p>
+                </div>
+
+                <div className="card" style={{ borderLeft: '4px solid #fbc02d' }}>
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-muted" style={{ fontSize: '0.9rem', margin: 0 }}>Maior Venda</h3>
+                        <Award size={20} color="#f59e0b" />
+                    </div>
+                    <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0 }}>
+                        R$ {metrics.maxSale.toFixed(2)}
                     </p>
                 </div>
 
