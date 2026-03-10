@@ -155,6 +155,23 @@ export default function Sales() {
         setPaymentMethod('Pix');
     };
 
+    const handleDeleteSale = async (id) => {
+        if (window.confirm('Tem certeza que deseja excluir esta venda permanentemente? Isso não retornará o estoque.')) {
+            setIsSubmitting(true);
+            try {
+                // Remove os itens primeiro devido a restrição de chave (se não houver ON DELETE CASCADE)
+                await supabase.from('sale_items').delete().eq('sale_id', id);
+                await supabase.from('sales').delete().eq('id', id);
+                fetchInitialData();
+            } catch (e) {
+                console.error('Erro ao deletar venda', e);
+                alert('Erro ao excluir venda.');
+            } finally {
+                setIsSubmitting(false);
+            }
+        }
+    };
+
     return (
         <div className="container animate-fade-in">
             <div className="flex justify-between items-center mb-4">
@@ -292,9 +309,14 @@ export default function Sales() {
                             </div>
                             <div className="flex flex-col items-end gap-2">
                                 <span className="text-bold text-success" style={{ fontSize: '1.1rem' }}>{formatCurrency(sale.total)}</span>
-                                <button className="btn-icon-only text-primary" style={{ background: '#f3e8ff', border: 'none', cursor: 'pointer', padding: '6px', minWidth: '36px', minHeight: '36px' }} onClick={() => handleEditSale(sale)}>
-                                    ✏️ Editar
-                                </button>
+                                <div className="flex gap-2">
+                                    <button className="btn-icon-only text-primary" style={{ background: '#f3e8ff', border: 'none', cursor: 'pointer', padding: '6px', minWidth: '36px', minHeight: '36px' }} onClick={() => handleEditSale(sale)}>
+                                        ✏️ Editar
+                                    </button>
+                                    <button className="btn-icon-only text-danger" title="Excluir Venda" style={{ background: '#fee2e2', border: 'none', cursor: 'pointer', padding: '6px', minWidth: '36px', minHeight: '36px' }} onClick={() => handleDeleteSale(sale.id)}>
+                                        <Trash2 size={16} color="var(--danger)" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
