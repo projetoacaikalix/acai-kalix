@@ -219,51 +219,47 @@ export default function Dashboard() {
             <h1>Visão Geral</h1>
             <p className="text-muted mb-4">Acompanhe os resultados do Açai Kalix</p>
 
-            {/* Premium Date Filter */}
-            <div className="card mb-4" style={{
-                background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary-dark) 100%)',
-                color: '#fff',
-                padding: '24px',
-                border: 'none',
-                boxShadow: '0 4px 15px rgba(124, 67, 189, 0.3)'
-            }}>
-                <div className="flex items-center gap-3 mb-4">
-                    <Calendar size={28} color="#fbc02d" />
-                    <div>
-                        <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#fff' }}>Filtrar Resultados</h3>
-                        <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.8 }}>Relatório financeiro e de vendas</p>
+            {/* Filtro de Data Compacto */}
+            <div className="card mb-4" style={{ padding: '16px', borderLeft: '4px solid var(--primary)' }}>
+                <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center gap-2">
+                        <Calendar size={20} color="var(--primary)" />
+                        <h3 style={{ margin: 0, fontSize: '1rem' }}>Período de Análise</h3>
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: '1 1 120px' }}>
-                        <label style={{ fontSize: '0.75rem', opacity: 0.9, display: 'block', marginBottom: '6px' }}>Data Inicial</label>
+
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <div style={{ flex: '1 1 130px' }}>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Data Inicial</label>
                         <input
                             type="date"
-                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#fff', outline: 'none', colorScheme: 'dark' }}
+                            className="input-field"
+                            style={{ padding: '8px' }}
                             value={dateFilter.start}
                             onChange={e => setDateFilter({ ...dateFilter, start: e.target.value })}
                         />
                     </div>
-                    <div style={{ flex: '1 1 120px' }}>
-                        <label style={{ fontSize: '0.75rem', opacity: 0.9, display: 'block', marginBottom: '6px' }}>Data Final</label>
+                    <div style={{ flex: '1 1 130px' }}>
+                        <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Data Final</label>
                         <input
                             type="date"
-                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: '#fff', outline: 'none', colorScheme: 'dark' }}
+                            className="input-field"
+                            style={{ padding: '8px' }}
                             value={dateFilter.end}
                             onChange={e => setDateFilter({ ...dateFilter, end: e.target.value })}
                         />
                     </div>
-                </div>
-                <div className="mt-4 flex gap-3">
-                    <button className="btn" style={{ flex: 1, background: '#fbc02d', color: '#000', border: 'none', fontSize: '0.9rem', fontWeight: 'bold' }} onClick={() => fetchDashboardData()}>
-                        Atualizar Dashboard
-                    </button>
-                    <button className="btn" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', fontSize: '0.9rem' }} onClick={() => {
-                        setDateFilter({ start: getFirstDayOfMonth(), end: getLastDayOfMonth() });
-                        setTimeout(fetchDashboardData, 100);
-                    }}>
-                        Mês Atual
-                    </button>
+                    <div className="flex gap-2" style={{ flex: '1 1 200px' }}>
+                        <button className="btn btn-primary" style={{ flex: 1, padding: '8px' }} onClick={() => fetchDashboardData()}>
+                            Aplicar
+                        </button>
+                        <button className="btn btn-secondary" style={{ flex: 1, padding: '8px' }} onClick={() => {
+                            setDateFilter({ start: getFirstDayOfMonth(), end: getLastDayOfMonth() });
+                            setTimeout(fetchDashboardData, 100);
+                        }}>
+                            Mês Atual
+                        </button>
+                    </div>
                 </div>
             </div>
 
