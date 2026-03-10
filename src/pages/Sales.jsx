@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { ShoppingCart, Package, Plus, Trash2, Check, RefreshCw } from 'lucide-react';
-import { formatCurrency } from '../utils';
+import { formatCurrency, confirmAlert, successAlert, errorAlert } from '../utils';
 
 export default function Sales() {
     const [products, setProducts] = useState([]);
@@ -71,7 +71,7 @@ export default function Sales() {
     const totalCart = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
     const confirmSale = async () => {
-        if (cart.length === 0) return alert('Carrinho vazio.');
+        if (cart.length === 0) return errorAlert('Carrinho Vazio', 'Adicione produtos antes de finalizar a venda.');
         setIsSubmitting(true);
 
         try {
@@ -112,7 +112,7 @@ export default function Sales() {
                         price: item.price
                     }]);
                 }
-                setSuccessMsg('Venda registrada com sucesso!');
+                successAlert('Venda registrada com sucesso!');
             }
 
             setCart([]);
@@ -124,7 +124,7 @@ export default function Sales() {
 
         } catch (e) {
             console.error('Erro ao finalizar venda', e);
-            alert('Erro ao finalizar venda.');
+            errorAlert('Erro na Venda', 'Houve um problema ao finalizar a venda.');
         } finally {
             setIsSubmitting(false);
         }
@@ -156,16 +156,18 @@ export default function Sales() {
     };
 
     const handleDeleteSale = async (id) => {
-        if (window.confirm('Tem certeza que deseja excluir esta venda permanentemente? Isso não retornará o estoque.')) {
+        const confirmed = await confirmAlert('Excluir Venda?', 'Tem certeza que deseja excluir esta venda permanentemente? Isso não retornará o estoque.');
+        if (confirmed) {
             setIsSubmitting(true);
             try {
-                // Remove os itens primeiro devido a restrição de chave (se não houver ON DELETE CASCADE)
+                // Remove os itens primeiro devido a restrição de chave
                 await supabase.from('sale_items').delete().eq('sale_id', id);
                 await supabase.from('sales').delete().eq('id', id);
                 fetchInitialData();
+                successAlert('Venda e produtos do pedido excluídos.');
             } catch (e) {
                 console.error('Erro ao deletar venda', e);
-                alert('Erro ao excluir venda.');
+                errorAlert('Erro', 'Houve um problema ao excluir a venda.');
             } finally {
                 setIsSubmitting(false);
             }
@@ -180,13 +182,6 @@ export default function Sales() {
                     <p className="text-muted">{editingSaleId ? 'Alterando pedido existente' : 'Atendimento rápido'}</p>
                 </div>
             </div>
-
-            {successMsg && (
-                <div className="card mb-4 text-center animate-fade-in" style={{ backgroundColor: '#d1fae5', color: '#065f46', borderColor: '#10b981', borderWidth: '1px', borderStyle: 'solid' }}>
-                    <Check size={24} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
-                    <span className="text-bold">{successMsg}</span>
-                </div>
-            )}
 
             <div className="grid-2 grid-layout-sales">
                 {/* Lado Esquerdo: Produtos */}

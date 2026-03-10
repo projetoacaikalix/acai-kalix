@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Users, Plus, X, RefreshCw } from 'lucide-react';
-import { formatCurrency } from '../utils';
+import { formatCurrency, confirmAlert, successAlert } from '../utils';
 
 export default function Clients() {
     const [clients, setClients] = useState([]);
@@ -86,10 +86,12 @@ export default function Clients() {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Tem certeza que deseja excluir este cliente?')) {
+        const confirmed = await confirmAlert('Excluir Cliente?', 'Tem certeza que deseja excluir este cliente?');
+        if (confirmed) {
             setLoading(true);
             await supabase.from('clients').delete().eq('id', id);
             fetchClients();
+            successAlert('Cliente excluído com sucesso!');
         }
     };
 

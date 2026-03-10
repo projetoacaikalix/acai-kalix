@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Plus, Edit2, Trash2, X, RefreshCw } from 'lucide-react';
-import { formatCurrency } from '../utils';
+import { formatCurrency, confirmAlert, successAlert } from '../utils';
 
 export default function Products() {
     const [products, setProducts] = useState([]);
@@ -96,10 +96,12 @@ export default function Products() {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Tem certeza que deseja excluir este produto?')) {
+        const confirmed = await confirmAlert('Excluir Produto?', 'Tem certeza que deseja excluir este produto do catálogo?');
+        if (confirmed) {
             setLoading(true);
             await supabase.from('products').delete().eq('id', id);
             fetchProducts();
+            successAlert('Produto removido!');
         }
     };
 

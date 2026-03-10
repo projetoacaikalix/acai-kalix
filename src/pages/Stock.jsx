@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { RefreshCw, PackagePlus, AlertCircle } from 'lucide-react';
-import { formatCurrency } from '../utils';
+import { formatCurrency, confirmAlert, successAlert, errorAlert } from '../utils';
 
 export default function Stock() {
     const [products, setProducts] = useState([]);
@@ -115,8 +115,10 @@ export default function Stock() {
 
             resetForm();
             fetchData();
+            successAlert('Movimentação registrada com sucesso!');
         } catch (e) {
             console.error(e);
+            errorAlert('Erro na Movimentação', 'Houve um erro ao processar os dados de estoque.');
         }
     };
 
@@ -132,10 +134,12 @@ export default function Stock() {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Excluir este registro de movimentação do histórico?')) {
+        const confirmed = await confirmAlert('Excluir Movimentação?', 'Excluir este registro do histórico de estoque?');
+        if (confirmed) {
             setLoading(true);
             await supabase.from('stock_movements').delete().eq('id', id);
             fetchData();
+            successAlert('Registro removido do histórico.');
         }
     };
 
