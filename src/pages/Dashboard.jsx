@@ -237,27 +237,7 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <div className="grid-2 mb-4">
-                {/* Low Stock Alerts */}
-                <div className="card h-full" style={{ gridColumn: '1 / -1' }}>
-                    <div className="flex items-center gap-2 mb-4">
-                        <AlertTriangle size={24} color="var(--warning)" />
-                        <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Estoque Baixo</h2>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {lowStockProducts.length === 0 ? (
-                            <p className="text-muted">Todos os produtos com estoque regular.</p>
-                        ) : (
-                            lowStockProducts.map((p, idx) => (
-                                <div key={idx} className="flex justify-between items-center" style={{ padding: '12px', background: '#fef3c7', borderRadius: '8px' }}>
-                                    <span style={{ fontWeight: 600, color: '#92400e' }}>{p.name}</span>
-                                    <span className="badge badge-warning">{p.stock} un. restantes</span>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-            </div>
+
         </div>
     );
 }

@@ -270,36 +270,26 @@ export default function Sales() {
             {/* Histórico de Vendas Recentes */}
             <div className="card mt-4">
                 <h2>Histórico de Vendas</h2>
-                <div className="table-wrapper mt-4">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Cliente</th>
-                                <th>Método</th>
-                                <th>Total</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {recentSales.length === 0 && (
-                                <tr><td colSpan="5" className="text-center text-muted">Sem vendas recentes</td></tr>
-                            )}
-                            {recentSales.map(sale => (
-                                <tr key={sale.id}>
-                                    <td>{new Date(sale.created_at).toLocaleString('pt-BR')}</td>
-                                    <td>{sale.clients?.name || 'Avulso'}</td>
-                                    <td><span className="badge badge-primary">{sale.payment_method}</span></td>
-                                    <td className="text-bold text-success">R$ {parseFloat(sale.total).toFixed(2)}</td>
-                                    <td>
-                                        <button className="btn-icon-only text-primary" style={{ background: '#f3e8ff', border: 'none', cursor: 'pointer' }} onClick={() => handleEditSale(sale)}>
-                                            ✏️
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div className="mt-4" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {recentSales.length === 0 && (
+                        <p className="text-center text-muted">Sem vendas recentes</p>
+                    )}
+                    {recentSales.map(sale => (
+                        <div key={sale.id} className="flex justify-between items-center p-3" style={{ background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                            <div>
+                                <p className="text-bold" style={{ fontSize: '0.9rem', margin: '0 0 4px 0' }}>{sale.clients?.name || 'Avulso'}</p>
+                                <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>
+                                    {new Date(sale.created_at).toLocaleString('pt-BR')} • <span className="badge badge-primary" style={{ fontSize: '10px' }}>{sale.payment_method}</span>
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="text-bold text-success">R$ {parseFloat(sale.total).toFixed(2)}</span>
+                                <button className="btn-icon-only text-primary" style={{ background: '#f3e8ff', border: 'none', cursor: 'pointer', padding: '6px', minWidth: '32px', minHeight: '32px' }} onClick={() => handleEditSale(sale)}>
+                                    ✏️
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>

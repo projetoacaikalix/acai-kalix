@@ -22,8 +22,8 @@ export default function Stock() {
 
     const fetchData = async () => {
         setLoading(true);
-        // Fetch products (apenas Componentes)
-        const { data: pData } = await supabase.from('products').select('id, name, stock').eq('status', true).eq('category', 'Componentes').order('name');
+        // Fetch products (apenas Complementos)
+        const { data: pData } = await supabase.from('products').select('id, name, stock').eq('status', true).eq('category', 'Complementos').order('name');
         setProducts(pData || []);
 
         // Fetch movements
@@ -57,7 +57,7 @@ export default function Stock() {
                 const { data: existingProdArr } = await supabase.from('products')
                     .select('id, stock')
                     .ilike('name', formData.product_name)
-                    .eq('category', 'Componentes');
+                    .eq('category', 'Complementos');
 
                 const existingProd = existingProdArr && existingProdArr.length > 0 ? existingProdArr[0] : null;
 
@@ -69,7 +69,7 @@ export default function Stock() {
                     const newStock = formData.type === 'in' ? qty : -qty;
                     const { data: newProd } = await supabase.from('products').insert([{
                         name: formData.product_name,
-                        category: 'Componentes',
+                        category: 'Complementos',
                         price: 0,
                         cost: 0,
                         stock: newStock
