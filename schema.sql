@@ -10,6 +10,8 @@ CREATE TABLE products (
   stock INT NOT NULL DEFAULT 0,
   status BOOLEAN NOT NULL DEFAULT true,
   image_url TEXT,
+  unit TEXT DEFAULT 'unidade',
+  recipe JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

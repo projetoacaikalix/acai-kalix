@@ -111,6 +111,38 @@ export default function Sales() {
                         quantity: item.qty,
                         price: item.price
                     }]);
+
+                    // Auto-Deduct ingredients based on recipe
+                    if (item.recipe && item.recipe.length > 0) {
+                        for (const ing of item.recipe) {
+                            const qtyToDeduct = ing.quantity * item.qty;
+
+                            // Get current stock
+                            const { data: ingData } = await supabase
+                                .from('products')
+                                .select('stock')
+                                .eq('id', ing.ingredient_id)
+                                .single();
+
+                            if (ingData) {
+                                // Update stock
+                                const newStock = ingData.stock - qtyToDeduct;
+                                await supabase
+                                    .from('products')
+                                    .update({ stock: newStock })
+                                    .eq('id', ing.ingredient_id);
+
+                                // Register movement
+                                await supabase.from('stock_movements').insert([{
+                                    product_id: ing.ingredient_id,
+                                    type: 'out',
+                                    quantity: qtyToDeduct,
+                                    value: 0,
+                                    reason: `Venda Automática: ${item.qty}x ${item.name}`
+                                }]);
+                            }
+                        }
+                    }
                 }
                 successAlert('Venda registrada com sucesso!');
             }
