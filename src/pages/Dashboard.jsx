@@ -36,6 +36,7 @@ export default function Dashboard() {
 
     const [lowStockProducts, setLowStockProducts] = useState([]);
     const [topProducts, setTopProducts] = useState({ labels: [], data: [] });
+    const [topClients, setTopClients] = useState({ labels: [], data: [] });
 
     useEffect(() => {
         fetchDashboardData();
@@ -85,6 +86,23 @@ export default function Dashboard() {
                 data: []
             });
 
+            // 4. Fetch Top Clients
+            const { data: clientsData } = await supabase.from('clients').select(`
+                name,
+                sales (total)
+            `);
+            if (clientsData) {
+                const clientTotals = clientsData.map(c => {
+                    const totalSpent = c.sales.reduce((acc, s) => acc + parseFloat(s.total), 0);
+                    return { name: c.name, total: totalSpent };
+                }).filter(c => c.total > 0).sort((a, b) => b.total - a.total).slice(0, 5);
+
+                setTopClients({
+                    labels: clientTotals.map(c => c.name),
+                    data: clientTotals.map(c => c.total)
+                });
+            }
+
         } catch (e) {
             console.error(e);
         }
@@ -109,6 +127,38 @@ export default function Dashboard() {
         maintainAspectRatio: false,
         plugins: {
             legend: { display: false },
+        },
+    };
+
+    const clientChartData = {
+        labels: topClients.labels,
+        datasets: [
+            {
+                data: topClients.data,
+                backgroundColor: [
+                    '#4a148c',
+                    '#7c43bd',
+                    '#fbc02d',
+                    '#10b981',
+                    '#3b82f6'
+                ],
+                borderWidth: 0,
+            },
+        ],
+    };
+
+    const clientChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'right' },
+            tooltip: {
+                callbacks: {
+                    label: function (context) {
+                        return ' R$ ' + context.raw.toFixed(2);
+                    }
+                }
+            }
         },
     };
 
@@ -171,8 +221,25 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Low Stock Alerts */}
+                {/* Top Clients Chart */}
                 <div className="card h-full">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Users size={24} color="var(--primary)" />
+                        <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Top Clientes (Por Faturamento)</h2>
+                    </div>
+                    {topClients.data.length === 0 ? (
+                        <p className="text-muted text-center mt-4">Ainda não há clientes com compras registradas.</p>
+                    ) : (
+                        <div style={{ height: '220px' }}>
+                            <Doughnut data={clientChartData} options={clientChartOptions} />
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="grid-2 mb-4">
+                {/* Low Stock Alerts */}
+                <div className="card h-full" style={{ gridColumn: '1 / -1' }}>
                     <div className="flex items-center gap-2 mb-4">
                         <AlertTriangle size={24} color="var(--warning)" />
                         <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Estoque Baixo</h2>
