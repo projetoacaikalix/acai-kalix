@@ -22,12 +22,33 @@ export default function Stock() {
 
     const fetchData = async () => {
         setLoading(true);
+
         // Fetch products (apenas Complementos)
         const { data: pData } = await supabase.from('products').select('id, name, stock').eq('status', true).eq('category', 'Complementos').order('name');
-        setProducts(pData || []);
 
         // Fetch movements
         const { data: mData } = await supabase.from('stock_movements').select('*, products(name)').order('created_at', { ascending: false }).limit(20);
+
+        // Calcular o valor total investido por produto (soma de entradas)
+        const { data: allMoves } = await supabase.from('stock_movements').select('product_id, type, value');
+
+        const productsWithValue = (pData || []).map(prod => {
+            let totalInvested = 0;
+            if (allMoves) {
+                // Apenas consideramos os valores como custo do que comprou
+                allMoves.forEach(m => {
+                    if (m.product_id === prod.id && m.type === 'in' && m.value) {
+                        totalInvested += parseFloat(m.value);
+                    }
+                });
+            }
+            return {
+                ...prod,
+                totalValue: totalInvested
+            };
+        });
+
+        setProducts(productsWithValue);
         setMovements(mData || []);
         setLoading(false);
     };
@@ -137,31 +158,44 @@ export default function Stock() {
                 )}
             </div>
 
-            {/* Visualização de Itens em Estoque */}
-            <div className="card mb-4" style={{ background: 'linear-gradient(to right, #f8fafc, #ffffff)', border: '1px solid #e2e8f0' }}>
-                <h2 style={{ fontSize: '1.1rem', marginBottom: '16px' }}>Visão Geral do Estoque</h2>
-                <div style={{ display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))' }}>
-                    {products.length === 0 ? (
-                        <p className="text-muted" style={{ gridColumn: '1 / -1', margin: 0 }}>Nenhum item em estoque.</p>
-                    ) : (
-                        products.map(p => (
-                            <div key={p.id} style={{
-                                padding: '12px',
-                                background: '#fff',
-                                borderRadius: '8px',
-                                border: '1px solid #cbd5e1',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '4px',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                            }}>
-                                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={p.name}>{p.name}</span>
-                                <span style={{ fontSize: '1.2rem', fontWeight: 700, color: p.stock <= 5 ? 'var(--danger)' : 'var(--primary)' }}>
-                                    {p.stock} <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#94a3b8' }}>un.</span>
-                                </span>
-                            </div>
-                        ))
-                    )}
+            {/* Visualização de Itens em Estoque (Tabela com Valores) */}
+            <div className="card mb-4" style={{ border: '1px solid #e2e8f0', padding: '0' }}>
+                <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid #e2e8f0', background: 'linear-gradient(to right, #f8fafc, #ffffff)' }}>
+                    <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Visão Geral do Estoque</h2>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <thead>
+                            <tr style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.85rem', textTransform: 'uppercase' }}>
+                                <th style={{ padding: '12px 24px', borderBottom: '2px solid #e2e8f0' }}>Produto</th>
+                                <th style={{ padding: '12px 24px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Quantidade</th>
+                                <th style={{ padding: '12px 24px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Valor Acumulado (Entradas)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {products.length === 0 ? (
+                                <tr>
+                                    <td colSpan="3" style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>Nenhum item em estoque.</td>
+                                </tr>
+                            ) : (
+                                products.map(p => (
+                                    <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9', background: '#fff', transition: 'background 0.2s' }}>
+                                        <td style={{ padding: '16px 24px', fontWeight: 600, color: '#334155' }}>
+                                            {p.name}
+                                        </td>
+                                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                                            <span style={{ fontSize: '1.05rem', fontWeight: 700, color: p.stock <= 5 ? 'var(--danger)' : 'var(--primary)' }}>
+                                                {p.stock} <span style={{ fontSize: '0.8rem', fontWeight: 400, color: '#94a3b8' }}>un.</span>
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: 600, color: '#0f172a' }}>
+                                            R$ {(p.totalValue || 0).toFixed(2)}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
