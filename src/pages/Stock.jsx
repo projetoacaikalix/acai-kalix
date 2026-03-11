@@ -293,38 +293,38 @@ export default function Stock() {
                 <div style={{ padding: '24px 24px 16px', borderBottom: '1px solid #e2e8f0', background: 'linear-gradient(to right, #f8fafc, #ffffff)' }}>
                     <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Visão Geral do Estoque (Insumos)</h2>
                 </div>
-                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '400px' }}>
+                <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
-                            <tr style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.85rem', textTransform: 'uppercase' }}>
-                                <th style={{ padding: '12px 16px', borderBottom: '2px solid #e2e8f0' }}>Insumo</th>
-                                <th style={{ padding: '12px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Qtd</th>
-                                <th style={{ padding: '12px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Valor Total</th>
-                                <th style={{ padding: '12px 16px', borderBottom: '2px solid #e2e8f0', textAlign: 'center' }}>Ações</th>
+                            <tr style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                                <th style={{ padding: '8px', borderBottom: '2px solid #e2e8f0' }}>Insumo</th>
+                                <th style={{ padding: '8px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Qtd</th>
+                                <th style={{ padding: '8px', borderBottom: '2px solid #e2e8f0', textAlign: 'right' }}>Valor Total</th>
+                                <th style={{ padding: '8px', borderBottom: '2px solid #e2e8f0', textAlign: 'center' }}>Ação</th>
                             </tr>
                         </thead>
                         <tbody>
                             {products.length === 0 ? (
                                 <tr>
-                                    <td colSpan="4" style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>Nenhum insumo em estoque.</td>
+                                    <td colSpan="4" style={{ padding: '16px', textAlign: 'center', color: '#64748b' }}>Nenhum insumo em estoque.</td>
                                 </tr>
                             ) : (
                                 products.map(p => (
                                     <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9', background: '#fff', transition: 'background 0.2s' }}>
-                                        <td style={{ padding: '12px 16px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                                        <td style={{ padding: '8px', fontWeight: 600, color: '#334155', fontSize: '0.85rem' }}>
                                             {p.name}
                                         </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                                            <span style={{ fontSize: '1rem', fontWeight: 700, color: p.stock <= 5 ? 'var(--danger)' : 'var(--primary)' }}>
-                                                {p.stock} <span style={{ fontSize: '0.75rem', fontWeight: 400, color: '#94a3b8' }}>{p.unit}</span>
+                                        <td style={{ padding: '8px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: p.stock <= 5 ? 'var(--danger)' : 'var(--primary)' }}>
+                                                {p.stock} <span style={{ fontSize: '0.65rem', fontWeight: 400, color: '#94a3b8' }}>{p.unit}</span>
                                             </span>
                                         </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#0f172a', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>
+                                        <td style={{ padding: '8px', textAlign: 'right', fontWeight: 600, color: '#0f172a', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
                                             {formatCurrency(p.totalValue || 0)}
                                         </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                                            <button className="btn-icon-only text-danger" title="Excluir Insumo" style={{ background: '#fee2e2', border: 'none', cursor: 'pointer', padding: '6px', minWidth: '32px', minHeight: '32px' }} onClick={() => handleDeleteProduct(p.id)}>
-                                                <Trash2 size={16} color="var(--danger)" />
+                                        <td style={{ padding: '8px', textAlign: 'center' }}>
+                                            <button className="btn-icon-only text-danger" title="Excluir Insumo" style={{ background: '#fee2e2', border: 'none', cursor: 'pointer', padding: '6px', minWidth: '28px', minHeight: '28px' }} onClick={() => handleDeleteProduct(p.id)}>
+                                                <Trash2 size={14} color="var(--danger)" />
                                             </button>
                                         </td>
                                     </tr>
