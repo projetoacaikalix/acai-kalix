@@ -400,28 +400,30 @@ export default function Stock() {
                 {simResults && (
                     <div className="mt-4 animate-fade-in" style={{ background: '#fff', borderRadius: '8px', padding: '16px', border: '1px solid #bae6fd' }}>
                         <h3 style={{ fontSize: '1rem', marginBottom: '12px', color: '#0f172a' }}>Resultado da Simulação</h3>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                                    <th style={{ padding: '8px' }}>Insumo</th>
-                                    <th style={{ padding: '8px', textAlign: 'right' }}>Necessário</th>
-                                    <th style={{ padding: '8px', textAlign: 'right' }}>Em Estoque</th>
-                                    <th style={{ padding: '8px', textAlign: 'right' }}>Falta Comprar</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {simResults.map((res, i) => (
-                                    <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                        <td style={{ padding: '8px', fontWeight: 500 }}>{res.name}</td>
-                                        <td style={{ padding: '8px', textAlign: 'right' }}>{res.required} <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{res.unit}</span></td>
-                                        <td style={{ padding: '8px', textAlign: 'right', color: res.available >= res.required ? 'var(--success)' : 'inherit' }}>{res.available} <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{res.unit}</span></td>
-                                        <td style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold', color: res.missing > 0 ? 'var(--danger)' : 'var(--success)' }}>
-                                            {res.missing > 0 ? `${res.missing} ${res.unit}` : 'OK'}
-                                        </td>
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '2px solid #e2e8f0', color: '#475569' }}>
+                                        <th style={{ padding: '8px' }}>Insumo</th>
+                                        <th style={{ padding: '8px', textAlign: 'right' }}>Necessário</th>
+                                        <th style={{ padding: '8px', textAlign: 'right' }}>Em Estoque</th>
+                                        <th style={{ padding: '8px', textAlign: 'right' }}>Falta Comprar</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {simResults.map((res, i) => (
+                                        <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                            <td style={{ padding: '8px', fontWeight: 500, whiteSpace: 'nowrap' }}>{res.name}</td>
+                                            <td style={{ padding: '8px', textAlign: 'right', whiteSpace: 'nowrap' }}>{res.required} <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{res.unit}</span></td>
+                                            <td style={{ padding: '8px', textAlign: 'right', whiteSpace: 'nowrap', color: res.available >= res.required ? 'var(--success)' : 'inherit' }}>{res.available} <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{res.unit}</span></td>
+                                            <td style={{ padding: '8px', textAlign: 'right', fontWeight: 'bold', whiteSpace: 'nowrap', color: res.missing > 0 ? 'var(--danger)' : 'var(--success)' }}>
+                                                {res.missing > 0 ? `${res.missing} ${res.unit}` : 'OK'}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>
