@@ -224,8 +224,8 @@ export default function Products() {
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                     {formData.recipe.map((item, index) => (
-                                        <div key={index} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                            <div style={{ flex: 2 }}>
+                                        <div key={index} style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0' }}>
+                                            <div style={{ flex: '1 1 200px' }}>
                                                 <select
                                                     className="select-field"
                                                     value={item.ingredient_id}
@@ -238,7 +238,7 @@ export default function Products() {
                                                     ))}
                                                 </select>
                                             </div>
-                                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ flex: '1 1 120px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <input
                                                     type="number"
                                                     step="0.01"
@@ -248,18 +248,15 @@ export default function Products() {
                                                     onChange={e => updateRecipeItem(index, 'quantity', e.target.value)}
                                                     required
                                                 />
-                                                <span style={{ fontSize: '0.9rem', color: '#64748b', minWidth: '40px' }}>
-                                                    {item.unit || 'un.'}
+                                                <span className="text-muted" style={{ fontSize: '0.85rem', minWidth: '30px' }}>
+                                                    {item.unit || 'un'}
                                                 </span>
                                             </div>
-                                            <button
-                                                type="button"
-                                                className="btn-icon-only text-danger"
-                                                style={{ border: 'none', background: 'transparent' }}
-                                                onClick={() => removeRecipeItem(index)}
-                                            >
-                                                <X size={20} />
-                                            </button>
+                                            <div>
+                                                <button type="button" className="btn-icon-only text-danger" style={{ background: 'transparent', border: 'none' }} onClick={() => removeRecipeItem(index)}>
+                                                    <X size={20} />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
