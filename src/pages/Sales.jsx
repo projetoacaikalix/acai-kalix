@@ -196,18 +196,61 @@ export default function Sales() {
     };
 
     const handleDeleteSale = async (id) => {
-        const confirmed = await confirmAlert('Excluir Venda?', 'Tem certeza que deseja excluir esta venda permanentemente? Isso não retornará o estoque.');
+        const confirmed = await confirmAlert('Excluir Venda?', 'Tem certeza que deseja excluir esta venda permanentemente? Isso retornará automaticamente os insumos (receitas) ao estoque.');
         if (confirmed) {
             setIsSubmitting(true);
             try {
-                // Remove os itens primeiro devido a restrição de chave
+                // Return stock from recipe items first
+                const { data: saleItems } = await supabase
+                    .from('sale_items')
+                    .select('quantity, products(id, name, recipe)')
+                    .eq('sale_id', id);
+
+                if (saleItems) {
+                    for (const sItem of saleItems) {
+                        const prod = sItem.products;
+                        if (prod && prod.recipe && prod.recipe.length > 0) {
+                            for (const ing of prod.recipe) {
+                                const qtyToRefund = ing.quantity * sItem.quantity;
+
+                                // Get current stock
+                                const { data: ingData } = await supabase
+                                    .from('products')
+                                    .select('stock')
+                                    .eq('id', ing.ingredient_id)
+                                    .single();
+
+                                if (ingData) {
+                                    // Update stock
+                                    const newStock = ingData.stock + qtyToRefund;
+                                    await supabase
+                                        .from('products')
+                                        .update({ stock: newStock })
+                                        .eq('id', ing.ingredient_id);
+
+                                    // Register movement
+                                    await supabase.from('stock_movements').insert([{
+                                        product_id: ing.ingredient_id,
+                                        type: 'in',
+                                        quantity: qtyToRefund,
+                                        value: 0,
+                                        reason: `Estorno (Venda Excluída): ${sItem.quantity}x ${prod.name}`
+                                    }]);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Remove os itens e a venda
                 await supabase.from('sale_items').delete().eq('sale_id', id);
                 await supabase.from('sales').delete().eq('id', id);
+
                 fetchInitialData();
-                successAlert('Venda e produtos do pedido excluídos.');
+                successAlert('Venda excluída e insumos estornados.');
             } catch (e) {
                 console.error('Erro ao deletar venda', e);
-                errorAlert('Erro', 'Houve um problema ao excluir a venda.');
+                errorAlert('Erro', 'Houve um problema ao excluir a venda e reverter o estoque.');
             } finally {
                 setIsSubmitting(false);
             }
