@@ -49,33 +49,48 @@ export default function Orders() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            // Get today and next 7 days
+            // Get today and next 7 days in proper format
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+            const todayStr = today.toISOString().split('T')[0];
+            
             const nextWeek = new Date(today);
             nextWeek.setDate(today.getDate() + 7);
+            const nextWeekStr = nextWeek.toISOString().split('T')[0];
 
-            const { data: oData, error: oError } = await supabase
-                .from('orders')
-                .select(`
-                    *,
-                    clients(name),
-                    products(name, category)
-                `)
-                .gte('scheduled_date', today.toISOString().split('T')[0])
-                .lte('scheduled_date', nextWeek.toISOString().split('T')[0])
-                .order('scheduled_date', { ascending: true });
+            // Fetch everything in parallel and independently
+            const [ordersRes, productsRes, clientsRes] = await Promise.all([
+                supabase
+                    .from('orders')
+                    .select(`
+                        *,
+                        clients (name),
+                        products (name, category)
+                    `)
+                    .gte('scheduled_date', todayStr)
+                    .lte('scheduled_date', nextWeekStr)
+                    .order('scheduled_date', { ascending: true }),
+                supabase
+                    .from('products')
+                    .select('*')
+                    .eq('category', 'Açaí')
+                    .eq('status', true)
+                    .order('name'),
+                supabase
+                    .from('clients')
+                    .select('id, name')
+                    .order('name')
+            ]);
 
-            const { data: pData } = await supabase.from('products').select('*').eq('status', true).order('name');
-            const { data: cData } = await supabase.from('clients').select('id, name').order('name');
+            if (ordersRes.error) console.error('Error fetching orders:', ordersRes.error);
+            if (productsRes.error) console.error('Error fetching products:', productsRes.error);
+            if (clientsRes.error) console.error('Error fetching clients:', clientsRes.error);
 
-            if (oError) throw oError;
-
-            setOrders(oData || []);
-            setProducts(pData || []);
-            setClients(cData || []);
+            setOrders(ordersRes.data || []);
+            setProducts(productsRes.data || []);
+            setClients(clientsRes.data || []);
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('Unexpected error:', error);
         } finally {
             setLoading(false);
         }
