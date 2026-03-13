@@ -70,8 +70,9 @@ export default function Orders() {
                 supabase
                     .from('products')
                     .select('*')
+                    .in('category', ['Açaí', 'Bebidas'])
                     .eq('status', true)
-                    .order('name'), // Fetch all active products to be safe
+                    .order('name'), // Only final products, no ingredients
                 supabase
                     .from('clients')
                     .select('id, name')
