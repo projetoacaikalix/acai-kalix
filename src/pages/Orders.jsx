@@ -12,7 +12,8 @@ import {
     Calendar,
     ChevronDown,
     ChevronUp,
-    RefreshCw
+    RefreshCw,
+    Trash2
 } from 'lucide-react';
 import { formatCurrency, confirmAlert, successAlert, errorAlert } from '../utils';
 
@@ -155,6 +156,27 @@ export default function Orders() {
             );
         } finally {
             setSubmitting(false);
+        }
+    };
+    const deleteOrder = async (id) => {
+        const confirmed = await confirmAlert(
+            'Excluir Encomenda?',
+            'Esta ação não pode ser desfeita.'
+        );
+
+        if (!confirmed) return;
+
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            successAlert('Encomenda excluída.');
+            fetchData();
+        } catch (error) {
+            errorAlert('Erro', 'Não foi possível excluir a encomenda.');
         }
     };
 
@@ -310,14 +332,22 @@ export default function Orders() {
                                                     {order.notes && <span style={{ marginLeft: '12px' }}>• {order.notes}</span>}
                                                 </p>
                                             </div>
-                                            <div style={{ textAlign: 'right' }}>
+                                            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                                                <button 
+                                                    className="btn-icon-only text-danger" 
+                                                    style={{ padding: '4px', marginBottom: '4px' }}
+                                                    onClick={() => deleteOrder(order.id)}
+                                                    title="Excluir Encomenda"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
                                                 <p className="text-bold" style={{ color: 'var(--primary)', margin: 0 }}>{order.quantity} Unid.</p>
                                                 <span 
                                                     className="badge" 
                                                     style={{ 
                                                         backgroundColor: getStatusColor(order.status), 
                                                         color: getStatusTextColor(order.status),
-                                                        marginTop: '8px',
+                                                        marginTop: '4px',
                                                         display: 'inline-block',
                                                         fontWeight: 'bold'
                                                     }}
