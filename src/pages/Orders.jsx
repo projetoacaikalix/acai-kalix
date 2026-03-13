@@ -110,10 +110,13 @@ export default function Orders() {
 
         try {
             // Ensure IDs are null if empty, to avoid UUID validation errors
+            // Ensure numeric values are parsed
             const payload = {
-                ...formData,
                 client_id: formData.client_id || null,
                 product_id: formData.product_id || null,
+                quantity: parseInt(formData.quantity, 10),
+                notes: formData.notes,
+                scheduled_date: formData.scheduled_date,
                 status: 'A fazer'
             };
 
@@ -348,24 +351,30 @@ export default function Orders() {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    backgroundColor: 'rgba(0,0,0,0.6)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     zIndex: 1000,
-                    padding: '16px'
+                    padding: '8px'
                 }}>
-                    <div className="card" style={{ width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
-                        <div className="flex justify-between items-center mb-4">
-                            <h2>Nova Encomenda</h2>
+                    <div className="card" style={{ 
+                        width: '100%', 
+                        maxWidth: '450px', 
+                        maxHeight: '95vh', 
+                        overflowY: 'auto',
+                        padding: '16px 20px' 
+                    }}>
+                        <div className="flex justify-between items-center mb-3">
+                            <h2 style={{ fontSize: '1.25rem' }}>Nova Encomenda</h2>
                             <button className="btn-icon-only text-muted" onClick={() => setIsFormOpen(false)}>
                                 <X size={24} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                            <div className="form-group">
-                                <label>Cliente</label>
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                            <div className="form-group" style={{ marginBottom: '8px' }}>
+                                <label style={{ marginBottom: '4px', fontSize: '0.9rem' }}>Cliente</label>
                                 <select 
                                     name="client_id" 
                                     className="select-field" 
@@ -378,8 +387,8 @@ export default function Orders() {
                                 </select>
                             </div>
 
-                            <div className="form-group">
-                                <label>Produto / Sabor</label>
+                            <div className="form-group" style={{ marginBottom: '8px' }}>
+                                <label style={{ marginBottom: '4px', fontSize: '0.9rem' }}>Produto / Sabor</label>
                                 <select 
                                     name="product_id" 
                                     className="select-field" 
@@ -392,9 +401,9 @@ export default function Orders() {
                                 </select>
                             </div>
 
-                            <div className="grid-2">
-                                <div className="form-group">
-                                    <label>Quantidade</label>
+                            <div className="grid-2" style={{ gap: '12px' }}>
+                                <div className="form-group" style={{ marginBottom: '8px' }}>
+                                    <label style={{ marginBottom: '4px', fontSize: '0.9rem' }}>Quantidade</label>
                                     <input 
                                         type="number" 
                                         name="quantity" 
@@ -405,8 +414,8 @@ export default function Orders() {
                                         required
                                     />
                                 </div>
-                                <div className="form-group">
-                                    <label>Data de Entrega</label>
+                                <div className="form-group" style={{ marginBottom: '8px' }}>
+                                    <label style={{ marginBottom: '4px', fontSize: '0.9rem' }}>Data</label>
                                     <input 
                                         type="date" 
                                         name="scheduled_date" 
@@ -418,19 +427,19 @@ export default function Orders() {
                                 </div>
                             </div>
 
-                            <div className="form-group">
-                                <label>Observações (opcional)</label>
+                            <div className="form-group" style={{ marginBottom: '4px' }}>
+                                <label style={{ marginBottom: '4px', fontSize: '0.9rem' }}>Obs (opcional)</label>
                                 <textarea 
                                     name="notes" 
                                     className="input-field" 
-                                    rows="3" 
-                                    placeholder="Ex: Sem granola, adicionar leite em pó..."
+                                    rows="2" 
+                                    placeholder="Detalhes do pedido..."
                                     value={formData.notes}
                                     onChange={handleInputChange}
                                 ></textarea>
                             </div>
 
-                            <button type="submit" className="btn btn-primary btn-block" style={{ height: '50px', marginTop: '12px' }} disabled={submitting}>
+                            <button type="submit" className="btn btn-primary btn-block" style={{ height: '54px', marginTop: '8px', fontSize: '1.1rem' }} disabled={submitting}>
                                 {submitting ? <RefreshCw className="animate-spin" /> : 'Confirmar Encomenda'}
                             </button>
                         </form>
