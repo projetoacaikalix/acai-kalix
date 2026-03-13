@@ -110,21 +110,33 @@ export default function Orders() {
 
         try {
             // Ensure IDs are null if empty, to avoid UUID validation errors
-            // Ensure numeric values are parsed
+            // Ensure numeric values are parsed correctly
+            const quantityVal = parseInt(formData.quantity, 10);
+            
+            if (!formData.product_id) {
+                errorAlert('Atenção', 'Selecione um produto antes de confirmar.');
+                setSubmitting(false);
+                return;
+            }
+
             const payload = {
                 client_id: formData.client_id || null,
-                product_id: formData.product_id || null,
-                quantity: parseInt(formData.quantity, 10),
-                notes: formData.notes,
+                product_id: formData.product_id,
+                quantity: isNaN(quantityVal) ? 1 : quantityVal,
+                notes: formData.notes || '',
                 scheduled_date: formData.scheduled_date,
                 status: 'A fazer'
             };
 
-            const { error } = await supabase.from('orders').insert([payload]);
+            console.log('Enviando encomenda:', payload);
+            const { error, data } = await supabase.from('orders').insert([payload]).select();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase error:', error);
+                throw error;
+            }
 
-            successAlert('Encomenda registrada!');
+            successAlert('Encomenda registrada com sucesso!');
             setIsFormOpen(false);
             setFormData({
                 client_id: '',
@@ -135,8 +147,12 @@ export default function Orders() {
             });
             fetchData();
         } catch (error) {
-            console.error('Error saving order:', error);
-            errorAlert('Erro', 'Não foi possível registrar a encomenda. Verifique se o produto e cliente foram selecionados.');
+            console.error('Full error details:', error);
+            // Show the actual error message to the user for better debugging
+            errorAlert(
+                'Erro ao Registrar', 
+                `Detalhes: ${error.message || 'Erro desconhecido'}. Verifique se a tabela 'orders' existe no seu banco de dados.`
+            );
         } finally {
             setSubmitting(false);
         }
