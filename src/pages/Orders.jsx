@@ -160,7 +160,9 @@ export default function Orders() {
 
     // Calculate Indicators
     const todayStr = new Date().toISOString().split('T')[0];
-    const totalToday = orders.filter(o => o.scheduled_date === todayStr).length;
+    const todaysOrders = orders.filter(o => o.scheduled_date === todayStr);
+    const totalToday = todaysOrders.length;
+    const toTodo = orders.filter(o => o.status === 'A fazer').length;
     const inProgress = orders.filter(o => o.status === 'Em preparo').length;
     const finished = orders.filter(o => o.status === 'Finalizado').length;
 
@@ -201,6 +203,15 @@ export default function Orders() {
         }
     };
 
+    const getStatusBorderColor = (status) => {
+        switch (status) {
+            case 'A fazer': return '#f59e0b'; // amber-500
+            case 'Em preparo': return '#3b82f6'; // blue-500
+            case 'Finalizado': return '#22c55e'; // green-500
+            default: return '#e2e8f0';
+        }
+    };
+
     return (
         <div className="container animate-fade-in">
             <div className="flex justify-between items-center mb-6">
@@ -214,18 +225,22 @@ export default function Orders() {
             </div>
 
             {/* Sumário de Indicadores */}
-            <div className="grid-3 mb-6">
-                <div className="card text-center" style={{ borderLeft: '4px solid var(--primary)' }}>
-                    <p className="text-muted mb-1">Total Hoje</p>
-                    <h2 style={{ fontSize: '2rem' }}>{totalToday}</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                <div className="card text-center" style={{ borderLeft: '4px solid #64748b' }}>
+                    <p className="text-muted mb-1" style={{ fontSize: '0.85rem' }}>Total Hoje</p>
+                    <h2 style={{ fontSize: '1.8rem' }}>{totalToday}</h2>
+                </div>
+                <div className="card text-center" style={{ borderLeft: '4px solid #f59e0b' }}>
+                    <p className="text-muted mb-1" style={{ fontSize: '0.85rem' }}>A Fazer</p>
+                    <h2 style={{ fontSize: '1.8rem', color: '#f59e0b' }}>{toTodo}</h2>
                 </div>
                 <div className="card text-center" style={{ borderLeft: '4px solid #3b82f6' }}>
-                    <p className="text-muted mb-1">Em Preparo</p>
-                    <h2 style={{ fontSize: '2rem', color: '#3b82f6' }}>{inProgress}</h2>
+                    <p className="text-muted mb-1" style={{ fontSize: '0.85rem' }}>Em Preparo</p>
+                    <h2 style={{ fontSize: '1.8rem', color: '#3b82f6' }}>{inProgress}</h2>
                 </div>
                 <div className="card text-center" style={{ borderLeft: '4px solid #22c55e' }}>
-                    <p className="text-muted mb-1">Finalizados</p>
-                    <h2 style={{ fontSize: '2rem', color: '#22c55e' }}>{finished}</h2>
+                    <p className="text-muted mb-1" style={{ fontSize: '0.85rem' }}>Finalizados</p>
+                    <h2 style={{ fontSize: '1.8rem', color: '#22c55e' }}>{finished}</h2>
                 </div>
             </div>
 
@@ -264,7 +279,9 @@ export default function Orders() {
                                         borderBottom: '1px solid #f1f5f9',
                                         display: 'flex',
                                         flexDirection: 'column',
-                                        gap: '12px'
+                                        gap: '12px',
+                                        borderLeft: `6px solid ${getStatusBorderColor(order.status)}`,
+                                        backgroundColor: order.status === 'A fazer' ? '#fffaf0' : 'white'
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                             <div>
@@ -282,7 +299,8 @@ export default function Orders() {
                                                         backgroundColor: getStatusColor(order.status), 
                                                         color: getStatusTextColor(order.status),
                                                         marginTop: '8px',
-                                                        display: 'inline-block'
+                                                        display: 'inline-block',
+                                                        fontWeight: 'bold'
                                                     }}
                                                 >
                                                     {order.status}
@@ -295,20 +313,21 @@ export default function Orders() {
                                                 <button 
                                                     className="btn btn-block flex items-center justify-center gap-2"
                                                     style={{ 
-                                                        height: '48px', 
-                                                        backgroundColor: order.status === 'A fazer' ? '#3b82f6' : '#22c55e',
+                                                        height: '54px', 
+                                                        backgroundColor: order.status === 'A fazer' ? '#f59e0b' : '#22c55e',
                                                         color: 'white',
                                                         border: 'none',
-                                                        borderRadius: '8px',
-                                                        fontWeight: 'bold',
-                                                        fontSize: '1rem'
+                                                        borderRadius: '12px',
+                                                        fontWeight: '900',
+                                                        fontSize: '1.1rem',
+                                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                                                     }}
                                                     onClick={() => updateStatus(order.id, order.status)}
                                                 >
                                                     {order.status === 'A fazer' ? (
-                                                        <><PlayCircle size={20} /> Começar Preparo</>
+                                                        <><PlayCircle size={22} /> Começar Preparo</>
                                                     ) : (
-                                                        <><CheckCircle2 size={20} /> Finalizar Produção</>
+                                                        <><CheckCircle2 size={22} /> Finalizar Produção</>
                                                     ) }
                                                 </button>
                                             </div>
