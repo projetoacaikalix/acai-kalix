@@ -106,10 +106,15 @@ export default function Orders() {
         setSubmitting(true);
 
         try {
-            const { error } = await supabase.from('orders').insert([{
+            // Ensure IDs are null if empty, to avoid UUID validation errors
+            const payload = {
                 ...formData,
+                client_id: formData.client_id || null,
+                product_id: formData.product_id || null,
                 status: 'A fazer'
-            }]);
+            };
+
+            const { error } = await supabase.from('orders').insert([payload]);
 
             if (error) throw error;
 
@@ -124,7 +129,8 @@ export default function Orders() {
             });
             fetchData();
         } catch (error) {
-            errorAlert('Erro', 'Não foi possível registrar a encomenda.');
+            console.error('Error saving order:', error);
+            errorAlert('Erro', 'Não foi possível registrar a encomenda. Verifique os dados.');
         } finally {
             setSubmitting(false);
         }
@@ -143,22 +149,26 @@ export default function Orders() {
                 .eq('id', id);
 
             if (error) throw error;
-            // Optimistic update handled by subscription or fetchData
+            fetchData(); // Refresh immediately
         } catch (error) {
             errorAlert('Erro', 'Falha ao atualizar status.');
         }
     };
 
     // Calculate Indicators
-    const totalToday = orders.filter(o => o.scheduled_date === new Date().toISOString().split('T')[0]).length;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const totalToday = orders.filter(o => o.scheduled_date === todayStr).length;
     const inProgress = orders.filter(o => o.status === 'Em preparo').length;
     const finished = orders.filter(o => o.status === 'Finalizado').length;
 
-    // Grouping logic
+    // Grouping logic - Defensive
     const groupedOrders = orders.reduce((acc, order) => {
-        const product = order.products?.name || 'Desconhecido';
-        if (!acc[product]) acc[product] = [];
-        acc[product].push(order);
+        const productData = order.products;
+        const productName = Array.isArray(productData) ? productData[0]?.name : productData?.name;
+        const key = productName || 'Desconhecido';
+        
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(order);
         return acc;
     }, {});
 
