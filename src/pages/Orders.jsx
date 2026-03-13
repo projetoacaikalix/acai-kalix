@@ -59,30 +59,32 @@ export default function Orders() {
             const nextWeekStr = nextWeek.toISOString().split('T')[0];
 
             // Fetch everything in parallel and independently
+            // Removed spaces in select string as PostgREST can be sensitive
             const [ordersRes, productsRes, clientsRes] = await Promise.all([
                 supabase
                     .from('orders')
-                    .select(`
-                        *,
-                        clients (name),
-                        products (name, category)
-                    `)
+                    .select('*,clients(name),products(name,category)')
                     .gte('scheduled_date', todayStr)
                     .lte('scheduled_date', nextWeekStr)
                     .order('scheduled_date', { ascending: true }),
                 supabase
                     .from('products')
                     .select('*')
-                    .eq('category', 'Açaí')
                     .eq('status', true)
-                    .order('name'),
+                    .order('name'), // Fetch all active products to be safe
                 supabase
                     .from('clients')
                     .select('id, name')
                     .order('name')
             ]);
 
-            if (ordersRes.error) console.error('Error fetching orders:', ordersRes.error);
+            if (ordersRes.error) {
+                console.error('Error fetching orders:', ordersRes.error);
+                // If the error is 42P01, the table doesn't exist
+                if (ordersRes.error.code === '42P01') {
+                    errorAlert('Erro do Sistema', 'A tabela de encomendas ainda não foi criada no banco de dados. Verifique o arquivo schema.sql.');
+                }
+            }
             if (productsRes.error) console.error('Error fetching products:', productsRes.error);
             if (clientsRes.error) console.error('Error fetching clients:', clientsRes.error);
 
@@ -130,7 +132,7 @@ export default function Orders() {
             fetchData();
         } catch (error) {
             console.error('Error saving order:', error);
-            errorAlert('Erro', 'Não foi possível registrar a encomenda. Verifique os dados.');
+            errorAlert('Erro', 'Não foi possível registrar a encomenda. Verifique se o produto e cliente foram selecionados.');
         } finally {
             setSubmitting(false);
         }
@@ -161,10 +163,16 @@ export default function Orders() {
     const inProgress = orders.filter(o => o.status === 'Em preparo').length;
     const finished = orders.filter(o => o.status === 'Finalizado').length;
 
+    // Helper to get name from potentially array or object join result
+    const getJoinedName = (data) => {
+        if (!data) return null;
+        if (Array.isArray(data)) return data[0]?.name;
+        return data.name;
+    };
+
     // Grouping logic - Defensive
     const groupedOrders = orders.reduce((acc, order) => {
-        const productData = order.products;
-        const productName = Array.isArray(productData) ? productData[0]?.name : productData?.name;
+        const productName = getJoinedName(order.products);
         const key = productName || 'Desconhecido';
         
         if (!acc[key]) acc[key] = [];
@@ -259,7 +267,7 @@ export default function Orders() {
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                             <div>
-                                                <p className="text-bold" style={{ margin: 0, fontSize: '1.1rem' }}>{order.clients?.name || 'Cliente Avulso'}</p>
+                                                <p className="text-bold" style={{ margin: 0, fontSize: '1.1rem' }}>{getJoinedName(order.clients) || 'Cliente Avulso'}</p>
                                                 <p className="text-muted" style={{ margin: '4px 0', fontSize: '0.9rem' }}>
                                                     <Calendar size={14} style={{ marginBottom: '-2px' }} /> {new Date(order.scheduled_date + 'T12:00:00').toLocaleDateString('pt-BR')} 
                                                     {order.notes && <span style={{ marginLeft: '12px' }}>• {order.notes}</span>}
