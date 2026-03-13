@@ -356,29 +356,31 @@ export default function Orders() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     zIndex: 1000,
-                    padding: '8px'
+                    padding: '10px'
                 }}>
                     <div className="card" style={{ 
                         width: '100%', 
-                        maxWidth: '420px', 
-                        maxHeight: '98vh', 
-                        overflowY: 'auto',
-                        padding: '12px 16px' 
+                        maxWidth: '400px', 
+                        maxHeight: '90vh', 
+                        display: 'flex',
+                        flexDirection: 'column',
+                        padding: '12px',
+                        gap: '8px'
                     }}>
-                        <div className="flex justify-between items-center mb-2">
-                            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Nova Encomenda</h2>
-                            <button className="btn-icon-only text-muted" onClick={() => setIsFormOpen(false)} style={{ padding: '4px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ fontSize: '1rem', margin: 0 }}>Nova Encomenda</h2>
+                            <button className="btn-icon-only text-muted" onClick={() => setIsFormOpen(false)} style={{ padding: '2px' }}>
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-                            <div className="form-group" style={{ marginBottom: '4px' }}>
-                                <label style={{ marginBottom: '2px', fontSize: '0.8rem', fontWeight: 'bold' }}>Cliente</label>
+                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '2px', display: 'block' }}>Cliente</label>
                                 <select 
                                     name="client_id" 
                                     className="select-field" 
-                                    style={{ height: '38px', fontSize: '0.9rem' }}
+                                    style={{ height: '36px', fontSize: '0.85rem', padding: '0 8px' }}
                                     value={formData.client_id} 
                                     onChange={handleInputChange}
                                     required
@@ -388,12 +390,12 @@ export default function Orders() {
                                 </select>
                             </div>
 
-                            <div className="form-group" style={{ marginBottom: '4px' }}>
-                                <label style={{ marginBottom: '2px', fontSize: '0.8rem', fontWeight: 'bold' }}>Produto / Sabor</label>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '2px', display: 'block' }}>Produto / Sabor</label>
                                 <select 
                                     name="product_id" 
                                     className="select-field" 
-                                    style={{ height: '38px', fontSize: '0.9rem' }}
+                                    style={{ height: '36px', fontSize: '0.85rem', padding: '0 8px' }}
                                     value={formData.product_id} 
                                     onChange={handleInputChange}
                                     required
@@ -403,27 +405,27 @@ export default function Orders() {
                                 </select>
                             </div>
 
-                            <div className="grid-2" style={{ gap: '10px' }}>
-                                <div className="form-group" style={{ marginBottom: '4px' }}>
-                                    <label style={{ marginBottom: '2px', fontSize: '0.8rem', fontWeight: 'bold' }}>Qtd</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '2px', display: 'block' }}>Qtd</label>
                                     <input 
                                         type="number" 
                                         name="quantity" 
                                         className="input-field" 
-                                        style={{ height: '38px', fontSize: '0.9rem' }}
+                                        style={{ height: '36px', fontSize: '0.85rem' }}
                                         min="1" 
                                         value={formData.quantity} 
                                         onChange={handleInputChange}
                                         required
                                     />
                                 </div>
-                                <div className="form-group" style={{ marginBottom: '4px' }}>
-                                    <label style={{ marginBottom: '2px', fontSize: '0.8rem', fontWeight: 'bold' }}>Data</label>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '2px', display: 'block' }}>Data</label>
                                     <input 
                                         type="date" 
                                         name="scheduled_date" 
                                         className="input-field" 
-                                        style={{ height: '38px', fontSize: '0.9rem', padding: '4px 8px' }}
+                                        style={{ height: '36px', fontSize: '0.85rem', padding: '0 4px' }}
                                         value={formData.scheduled_date} 
                                         onChange={handleInputChange}
                                         required
@@ -431,20 +433,19 @@ export default function Orders() {
                                 </div>
                             </div>
 
-                            <div className="form-group" style={{ marginBottom: '2px' }}>
-                                <label style={{ marginBottom: '2px', fontSize: '0.8rem', fontWeight: 'bold' }}>Observações (opcional)</label>
+                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '2px', display: 'block' }}>Observações</label>
                                 <textarea 
                                     name="notes" 
                                     className="input-field" 
-                                    style={{ fontSize: '0.85rem', padding: '6px 8px' }}
+                                    style={{ fontSize: '0.8rem', padding: '4px 8px', minHeight: '36px' }}
                                     rows="1" 
-                                    placeholder="Ex: Sem açúcar..."
                                     value={formData.notes}
                                     onChange={handleInputChange}
                                 ></textarea>
                             </div>
 
-                            <button type="submit" className="btn btn-primary btn-block" style={{ height: '48px', marginTop: '4px', fontSize: '1rem', fontWeight: 'bold' }} disabled={submitting}>
+                            <button type="submit" className="btn btn-primary btn-block" style={{ height: '42px', marginTop: '4px', fontSize: '1rem' }} disabled={submitting}>
                                 {submitting ? <RefreshCw className="animate-spin" size={18} /> : 'Confirmar Encomenda'}
                             </button>
                         </form>
