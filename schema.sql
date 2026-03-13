@@ -47,3 +47,14 @@ CREATE TABLE stock_movements (
   reason TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE TABLE orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+  quantity INT NOT NULL,
+  notes TEXT,
+  status TEXT NOT NULL CHECK (status IN ('A fazer', 'Em preparo', 'Finalizado')) DEFAULT 'A fazer',
+  scheduled_date DATE DEFAULT CURRENT_DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

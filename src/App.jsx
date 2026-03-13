@@ -8,6 +8,7 @@ import Products from './pages/Products';
 import Stock from './pages/Stock';
 import Clients from './pages/Clients';
 import Sales from './pages/Sales';
+import Orders from './pages/Orders';
 
 // Layout Component with Top Bar and Bottom Navigation
 const Layout = ({ children }) => {
@@ -19,6 +20,7 @@ const Layout = ({ children }) => {
     { path: '/produtos', label: 'Produtos', icon: <Package size={24} /> },
     { path: '/estoque', label: 'Estoque', icon: <Activity size={24} /> },
     { path: '/clientes', label: 'Clientes', icon: <Users size={24} /> },
+    { path: '/encomendas', label: 'Encomendas', icon: <ShoppingCart size={24} /> },
   ];
 
   return (
@@ -65,6 +67,7 @@ function App() {
           <Route path="/estoque" element={<Stock />} />
           <Route path="/clientes" element={<Clients />} />
           <Route path="/vendas" element={<Sales />} />
+          <Route path="/encomendas" element={<Orders />} />
         </Routes>
       </Layout>
     </BrowserRouter>
