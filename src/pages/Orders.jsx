@@ -353,10 +353,11 @@ export default function Orders() {
                     bottom: 0,
                     backgroundColor: 'rgba(0,0,0,0.6)',
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: 'flex-start',
                     justifyContent: 'center',
                     zIndex: 1000,
-                    padding: '10px'
+                    padding: '10px',
+                    paddingTop: '60px' // Pulls the modal upwards
                 }}>
                     <div className="card" style={{ 
                         width: '100%', 
