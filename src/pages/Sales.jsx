@@ -424,32 +424,32 @@ export default function Sales() {
 
             {/* Histórico de Vendas */}
             <div className="card mt-4">
-                <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
-                    <h2 style={{ margin: 0 }}>Histórico de Vendas</h2>
-                    <div className="flex items-end gap-2 flex-wrap" style={{ flex: '1', justifyContent: 'flex-end', minWidth: '280px' }}>
-                        <div className="form-group mb-0" style={{ flex: '1', minWidth: '130px' }}>
+                <div style={{ marginBottom: '16px' }}>
+                    <h2 style={{ marginBottom: '16px' }}>Histórico de Vendas</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '12px', alignItems: 'end' }}>
+                        <div className="form-group mb-0">
                             <label style={{ fontSize: '0.75rem', display: 'block', marginBottom: '4px' }}>Início</label>
                             <input
                                 type="date"
                                 className="input-field"
-                                style={{ width: '100%', padding: '6px' }}
+                                style={{ width: '100%', minHeight: '44px', padding: '8px' }}
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
                             />
                         </div>
-                        <div className="form-group mb-0" style={{ flex: '1', minWidth: '130px' }}>
+                        <div className="form-group mb-0">
                             <label style={{ fontSize: '0.75rem', display: 'block', marginBottom: '4px' }}>Fim</label>
                             <input
                                 type="date"
                                 className="input-field"
-                                style={{ width: '100%', padding: '6px' }}
+                                style={{ width: '100%', minHeight: '44px', padding: '8px' }}
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
                             />
                         </div>
                         <button
                             className="btn btn-outline"
-                            style={{ padding: '6px 12px', height: '35px', flex: '0 0 auto' }}
+                            style={{ width: '100%', minHeight: '44px', padding: '8px' }}
                             onClick={() => {
                                 setStartDate(new Date(new Date().setHours(0, 0, 0, 0)).toISOString().slice(0, 10));
                                 setEndDate(new Date(new Date().setHours(23, 59, 59, 999)).toISOString().slice(0, 10));
@@ -491,20 +491,20 @@ export default function Sales() {
 
                 {/* Paginação */}
                 {totalSales > itemsPerPage && (
-                    <div className="flex justify-between items-center mt-6 pt-4 flex-wrap gap-4" style={{ borderTop: '1px solid #e2e8f0' }}>
-                        <p className="text-muted" style={{ fontSize: '0.85rem', margin: 0 }}>
+                    <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+                        <p className="text-muted" style={{ fontSize: '0.85rem', margin: 0, textAlign: 'center' }}>
                             Mostrando {recentSales.length} de {totalSales} registros
                         </p>
-                        <div className="flex gap-2 flex-wrap">
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
                             <button
                                 className="btn btn-outline"
-                                style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                                style={{ padding: '6px 12px', fontSize: '0.85rem', flex: '1', minWidth: '80px', maxWidth: '100px' }}
                                 onClick={() => fetchSales(currentPage - 1)}
                                 disabled={currentPage === 1}
                             >
-                                Anterior
+                                Ant.
                             </button>
-                            <div className="flex items-center gap-1">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
                                 {Array.from({ length: Math.ceil(totalSales / itemsPerPage) }, (_, i) => i + 1)
                                     .filter(p => p === 1 || p === Math.ceil(totalSales / itemsPerPage) || Math.abs(p - currentPage) <= 1)
                                     .map((p, index, array) => (
@@ -512,7 +512,7 @@ export default function Sales() {
                                             {index > 0 && array[index - 1] !== p - 1 && <span className="text-muted">...</span>}
                                             <button
                                                 className={`btn ${currentPage === p ? 'btn-primary' : 'btn-outline'}`}
-                                                style={{ padding: '0', width: '32px', height: '32px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                style={{ padding: '0', width: '36px', height: '36px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                                 onClick={() => fetchSales(p)}
                                             >
                                                 {p}
@@ -522,11 +522,11 @@ export default function Sales() {
                             </div>
                             <button
                                 className="btn btn-outline"
-                                style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                                style={{ padding: '6px 12px', fontSize: '0.85rem', flex: '1', minWidth: '80px', maxWidth: '100px' }}
                                 onClick={() => fetchSales(currentPage + 1)}
                                 disabled={currentPage === Math.ceil(totalSales / itemsPerPage)}
                             >
-                                Próxima
+                                Próx.
                             </button>
                         </div>
                     </div>
