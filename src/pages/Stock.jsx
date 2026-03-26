@@ -24,9 +24,12 @@ export default function Stock() {
     const [simQty, setSimQty] = useState('');
     const [simResults, setSimResults] = useState(null);
 
-    // Filters for Movements
+    // Filters and Pagination for Movements
     const [moveStartDate, setMoveStartDate] = useState(new Date(new Date().setHours(0, 0, 0, 0)).toISOString().slice(0, 10));
     const [moveEndDate, setMoveEndDate] = useState(new Date(new Date().setHours(23, 59, 59, 999)).toISOString().slice(0, 10));
+    const [moveCurrentPage, setMoveCurrentPage] = useState(1);
+    const [totalMovements, setTotalMovements] = useState(0);
+    const moveItemsPerPage = 10;
 
     useEffect(() => {
         fetchData();
@@ -73,11 +76,19 @@ export default function Stock() {
         setProducts(productsWithValue);
         setAcaiProducts(aData || []);
         
-        await fetchMovements();
+        await fetchMovements(1);
         setLoading(false);
     };
 
-    const fetchMovements = async () => {
+    const fetchMovements = async (page = 1) => {
+        const from = (page - 1) * moveItemsPerPage;
+        const to = from + moveItemsPerPage - 1;
+
+        // Base query for counting
+        let countQuery = supabase
+            .from('stock_movements')
+            .select('*', { count: 'exact', head: true });
+
         // Base query for data
         let dataQuery = supabase
             .from('stock_movements')
@@ -86,23 +97,29 @@ export default function Stock() {
         // Apply filters
         if (moveStartDate) {
             const startStr = `${moveStartDate}T00:00:00.000Z`;
+            countQuery = countQuery.gte('created_at', startStr);
             dataQuery = dataQuery.gte('created_at', startStr);
         }
         if (moveEndDate) {
             const endStr = `${moveEndDate}T23:59:59.999Z`;
+            countQuery = countQuery.lte('created_at', endStr);
             dataQuery = dataQuery.lte('created_at', endStr);
         }
 
+        const { count } = await countQuery;
+        setTotalMovements(count || 0);
+
         const { data: mData } = await dataQuery
             .order('created_at', { ascending: false })
-            .limit(20);
+            .range(from, to);
 
         setMovements(mData || []);
+        setMoveCurrentPage(page);
     };
 
     useEffect(() => {
         if (!loading) {
-            fetchMovements();
+            fetchMovements(1);
         }
     }, [moveStartDate, moveEndDate]);
 
@@ -227,6 +244,7 @@ export default function Stock() {
 
             resetForm();
             fetchData();
+            fetchMovements(moveCurrentPage);
             successAlert('Movimentação registrada com sucesso!');
         } catch (e) {
             console.error(e);
@@ -264,6 +282,7 @@ export default function Stock() {
 
                 await supabase.from('stock_movements').delete().eq('id', id);
                 fetchData();
+                fetchMovements(moveCurrentPage);
                 successAlert('Registro removido do histórico (Estoque Ajustado).');
             } catch (e) {
                 console.error(e);
@@ -517,30 +536,73 @@ export default function Stock() {
                     ) : (
                         <>
                             <div className="mt-4" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {movements.length === 0 && (
-                                <p className="text-center text-muted">Ainda não há movimentações</p>
-                            )}
-                            {movements.map(m => (
-                                <div key={m.id} className="flex justify-between items-center p-3" style={{ background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                                    <div>
-                                        <p className="text-bold" style={{ fontSize: '0.9rem', margin: '0 0 4px 0' }}>{m.products?.name}</p>
-                                        <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>
-                                            {new Date(m.created_at).toLocaleString('pt-BR')} • <span className={`badge ${m.type === 'in' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '9px', marginLeft: '4px' }}>{m.type === 'in' ? 'Entrada (+)' : 'Saída (-)'}</span>
-                                        </p>
+                                {movements.length === 0 && (
+                                    <p className="text-center text-muted">Ainda não há movimentações</p>
+                                )}
+                                {movements.map(m => (
+                                    <div key={m.id} className="flex justify-between items-center p-3" style={{ background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                        <div>
+                                            <p className="text-bold" style={{ fontSize: '0.9rem', margin: '0 0 4px 0' }}>{m.products?.name}</p>
+                                            <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>
+                                                {new Date(m.created_at).toLocaleString('pt-BR')} • <span className={`badge ${m.type === 'in' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '9px', marginLeft: '4px' }}>{m.type === 'in' ? 'Entrada (+)' : 'Saída (-)'}</span>
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div style={{ textAlign: 'right' }}>
+                                                <p className="text-bold" style={{ margin: 0 }}>{m.quantity}</p>
+                                                {m.value > 0 && <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>{formatCurrency(m.value)}</p>}
+                                            </div>
+                                            <div className="flex flex-col gap-2">
+                                                <button className="btn-icon-only text-primary" style={{ padding: '4px', minWidth: '30px', minHeight: '30px', background: '#f3e8ff', border: 'none', cursor: 'pointer' }} onClick={() => handleEdit(m)}>✏️</button>
+                                                <button className="btn-icon-only text-danger" style={{ padding: '4px', minWidth: '30px', minHeight: '30px', background: '#fee2e2', border: 'none', cursor: 'pointer' }} onClick={() => handleDelete(m.id)}>🗑️</button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <div style={{ textAlign: 'right' }}>
-                                            <p className="text-bold" style={{ margin: 0 }}>{m.quantity}</p>
-                                            {m.value > 0 && <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>{formatCurrency(m.value)}</p>}
+                                ))}
+                            </div>
+
+                            {/* Paginação Movimentações */}
+                            {totalMovements > moveItemsPerPage && (
+                                <div className="flex justify-between items-center mt-6 pt-4" style={{ borderTop: '1px solid #e2e8f0' }}>
+                                    <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+                                        Mostrando {movements.length} de {totalMovements} registros
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <button
+                                            className="btn btn-outline"
+                                            style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                                            onClick={() => fetchMovements(moveCurrentPage - 1)}
+                                            disabled={moveCurrentPage === 1}
+                                        >
+                                            Anterior
+                                        </button>
+                                        <div className="flex items-center gap-1">
+                                            {Array.from({ length: Math.ceil(totalMovements / moveItemsPerPage) }, (_, i) => i + 1)
+                                                .filter(p => p === 1 || p === Math.ceil(totalMovements / moveItemsPerPage) || Math.abs(p - moveCurrentPage) <= 1)
+                                                .map((p, index, array) => (
+                                                    <React.Fragment key={p}>
+                                                        {index > 0 && array[index - 1] !== p - 1 && <span className="text-muted">...</span>}
+                                                        <button
+                                                            className={`btn ${moveCurrentPage === p ? 'btn-primary' : 'btn-outline'}`}
+                                                            style={{ padding: '0', width: '30px', height: '30px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                            onClick={() => fetchMovements(p)}
+                                                        >
+                                                            {p}
+                                                        </button>
+                                                    </React.Fragment>
+                                                ))}
                                         </div>
-                                        <div className="flex flex-col gap-2">
-                                            <button className="btn-icon-only text-primary" style={{ padding: '4px', minWidth: '30px', minHeight: '30px', background: '#f3e8ff', border: 'none', cursor: 'pointer' }} onClick={() => handleEdit(m)}>✏️</button>
-                                            <button className="btn-icon-only text-danger" style={{ padding: '4px', minWidth: '30px', minHeight: '30px', background: '#fee2e2', border: 'none', cursor: 'pointer' }} onClick={() => handleDelete(m.id)}>🗑️</button>
-                                        </div>
+                                        <button
+                                            className="btn btn-outline"
+                                            style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                                            onClick={() => fetchMovements(moveCurrentPage + 1)}
+                                            disabled={moveCurrentPage === Math.ceil(totalMovements / moveItemsPerPage)}
+                                        >
+                                            Próxima
+                                        </button>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                            )}
                         </>
                     )}
                 </div>
