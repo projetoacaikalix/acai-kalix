@@ -426,30 +426,30 @@ export default function Sales() {
             <div className="card mt-4">
                 <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
                     <h2 style={{ margin: 0 }}>Histórico de Vendas</h2>
-                    <div className="flex items-end gap-2 flex-wrap">
-                        <div className="form-group mb-0">
+                    <div className="flex items-end gap-2 flex-wrap" style={{ flex: '1', justifyContent: 'flex-end', minWidth: '280px' }}>
+                        <div className="form-group mb-0" style={{ flex: '1', minWidth: '130px' }}>
                             <label style={{ fontSize: '0.75rem', display: 'block', marginBottom: '4px' }}>Início</label>
                             <input
                                 type="date"
                                 className="input-field"
-                                style={{ width: '135px', padding: '6px' }}
+                                style={{ width: '100%', padding: '6px' }}
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
                             />
                         </div>
-                        <div className="form-group mb-0">
+                        <div className="form-group mb-0" style={{ flex: '1', minWidth: '130px' }}>
                             <label style={{ fontSize: '0.75rem', display: 'block', marginBottom: '4px' }}>Fim</label>
                             <input
                                 type="date"
                                 className="input-field"
-                                style={{ width: '135px', padding: '6px' }}
+                                style={{ width: '100%', padding: '6px' }}
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
                             />
                         </div>
                         <button
                             className="btn btn-outline"
-                            style={{ padding: '6px 12px', height: '35px' }}
+                            style={{ padding: '6px 12px', height: '35px', flex: '0 0 auto' }}
                             onClick={() => {
                                 setStartDate(new Date(new Date().setHours(0, 0, 0, 0)).toISOString().slice(0, 10));
                                 setEndDate(new Date(new Date().setHours(23, 59, 59, 999)).toISOString().slice(0, 10));
@@ -467,7 +467,7 @@ export default function Sales() {
                         <div key={sale.id} className="flex justify-between items-center p-3" style={{ background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                             <div>
                                 <p className="text-bold" style={{ fontSize: '0.9rem', margin: '0 0 4px 0' }}>{sale.clients?.name || 'Avulso'}</p>
-                                <p className="text-muted" style={{ fontSize: '0.8rem', margin: '0 0 4px 0', color: '#64748b' }}>
+                                <p className="text-muted" style={{ fontSize: '0.8rem', margin: '0 0 4px 0', color: '#64748b', wordBreak: 'break-word', maxWidth: '200px' }}>
                                     {sale.sale_items?.map(i => `${i.quantity}x ${i.products?.name}`).join(', ')}
                                 </p>
                                 <p className="text-muted" style={{ fontSize: '0.75rem', margin: 0 }}>
@@ -491,11 +491,11 @@ export default function Sales() {
 
                 {/* Paginação */}
                 {totalSales > itemsPerPage && (
-                    <div className="flex justify-between items-center mt-6 pt-4" style={{ borderTop: '1px solid #e2e8f0' }}>
-                        <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+                    <div className="flex justify-between items-center mt-6 pt-4 flex-wrap gap-4" style={{ borderTop: '1px solid #e2e8f0' }}>
+                        <p className="text-muted" style={{ fontSize: '0.85rem', margin: 0 }}>
                             Mostrando {recentSales.length} de {totalSales} registros
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
                             <button
                                 className="btn btn-outline"
                                 style={{ padding: '6px 12px', fontSize: '0.85rem' }}
