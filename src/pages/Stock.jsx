@@ -515,7 +515,8 @@ export default function Stock() {
                     {loading ? (
                         <div className="text-center p-4"><RefreshCw className="animate-spin" /></div>
                     ) : (
-                        <div className="mt-4" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <>
+                            <div className="mt-4" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {movements.length === 0 && (
                                 <p className="text-center text-muted">Ainda não há movimentações</p>
                             )}
@@ -582,7 +583,8 @@ export default function Stock() {
                                     </button>
                                 </div>
                             </div>
-                        )}
+                            )}
+                        </>
                     )}
                 </div>
             </div>
