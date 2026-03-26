@@ -23,6 +23,13 @@ export default function Sales() {
     const [recentSales, setRecentSales] = useState([]);
     const [editingSaleId, setEditingSaleId] = useState(null);
 
+    // Filters and Pagination
+    const [startDate, setStartDate] = useState(new Date(new Date().setHours(0, 0, 0, 0)).toISOString().slice(0, 10));
+    const [endDate, setEndDate] = useState(new Date(new Date().setHours(23, 59, 59, 999)).toISOString().slice(0, 10));
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalSales, setTotalSales] = useState(0);
+    const itemsPerPage = 10;
+
     useEffect(() => {
         fetchInitialData();
     }, []);
@@ -32,21 +39,59 @@ export default function Sales() {
         const { data: pData } = await supabase.from('products').select('*').eq('status', true).eq('category', 'Açaí').order('name');
         const { data: cData } = await supabase.from('clients').select('id, name').order('name');
 
-        // Fetch recent sales for history
-        const { data: sData } = await supabase.from('sales')
+        setProducts(pData || []);
+        setClients(cData || []);
+        
+        await fetchSales(1);
+        setLoading(false);
+    };
+
+    const fetchSales = async (page = 1) => {
+        const from = (page - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+
+        // Base query for counting
+        let countQuery = supabase
+            .from('sales')
+            .select('*', { count: 'exact', head: true });
+
+        // Base query for data
+        let dataQuery = supabase
+            .from('sales')
             .select(`
                 *, 
                 clients(name),
                 sale_items(quantity, products(name))
-            `)
-            .order('created_at', { ascending: false })
-            .limit(10);
+            `);
 
-        setProducts(pData || []);
-        setClients(cData || []);
+        // Apply filters
+        if (startDate) {
+            const startStr = `${startDate}T00:00:00.000Z`;
+            countQuery = countQuery.gte('created_at', startStr);
+            dataQuery = dataQuery.gte('created_at', startStr);
+        }
+        if (endDate) {
+            const endStr = `${endDate}T23:59:59.999Z`;
+            countQuery = countQuery.lte('created_at', endStr);
+            dataQuery = dataQuery.lte('created_at', endStr);
+        }
+
+        const { count } = await countQuery;
+        setTotalSales(count || 0);
+
+        const { data: sData } = await dataQuery
+            .order('created_at', { ascending: false })
+            .range(from, to);
+
         setRecentSales(sData || []);
-        setLoading(false);
+        setCurrentPage(page);
     };
+
+    useEffect(() => {
+        if (!loading) {
+            fetchSales(1);
+        }
+    }, [startDate, endDate]);
 
     const addToCart = (product) => {
         setCart(prev => {
@@ -158,7 +203,7 @@ export default function Sales() {
             setSelectedClient('');
             setPaymentMethod('Pix');
             setSaleDate(defaultDate);
-            fetchInitialData();
+            fetchSales(currentPage);
 
             setTimeout(() => setSuccessMsg(''), 3000);
 
@@ -246,7 +291,7 @@ export default function Sales() {
                 await supabase.from('sale_items').delete().eq('sale_id', id);
                 await supabase.from('sales').delete().eq('id', id);
 
-                fetchInitialData();
+                fetchSales(currentPage);
                 successAlert('Venda excluída e insumos estornados.');
             } catch (e) {
                 console.error('Erro ao deletar venda', e);
@@ -377,9 +422,43 @@ export default function Sales() {
                 </div>
             </div>
 
-            {/* Histórico de Vendas Recentes */}
+            {/* Histórico de Vendas */}
             <div className="card mt-4">
-                <h2>Histórico de Vendas</h2>
+                <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
+                    <h2 style={{ margin: 0 }}>Histórico de Vendas</h2>
+                    <div className="flex items-end gap-2 flex-wrap">
+                        <div className="form-group mb-0">
+                            <label style={{ fontSize: '0.75rem', display: 'block', marginBottom: '4px' }}>Início</label>
+                            <input
+                                type="date"
+                                className="input-field"
+                                style={{ width: '135px', padding: '6px' }}
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="form-group mb-0">
+                            <label style={{ fontSize: '0.75rem', display: 'block', marginBottom: '4px' }}>Fim</label>
+                            <input
+                                type="date"
+                                className="input-field"
+                                style={{ width: '135px', padding: '6px' }}
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                            />
+                        </div>
+                        <button
+                            className="btn btn-outline"
+                            style={{ padding: '6px 12px', height: '35px' }}
+                            onClick={() => {
+                                setStartDate(new Date(new Date().setHours(0, 0, 0, 0)).toISOString().slice(0, 10));
+                                setEndDate(new Date(new Date().setHours(23, 59, 59, 999)).toISOString().slice(0, 10));
+                            }}
+                        >
+                            Hoje
+                        </button>
+                    </div>
+                </div>
                 <div className="mt-4" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {recentSales.length === 0 && (
                         <p className="text-center text-muted">Sem vendas recentes</p>
@@ -409,6 +488,49 @@ export default function Sales() {
                         </div>
                     ))}
                 </div>
+
+                {/* Paginação */}
+                {totalSales > itemsPerPage && (
+                    <div className="flex justify-between items-center mt-6 pt-4" style={{ borderTop: '1px solid #e2e8f0' }}>
+                        <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+                            Mostrando {recentSales.length} de {totalSales} registros
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                className="btn btn-outline"
+                                style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                                onClick={() => fetchSales(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                Anterior
+                            </button>
+                            <div className="flex items-center gap-1">
+                                {Array.from({ length: Math.ceil(totalSales / itemsPerPage) }, (_, i) => i + 1)
+                                    .filter(p => p === 1 || p === Math.ceil(totalSales / itemsPerPage) || Math.abs(p - currentPage) <= 1)
+                                    .map((p, index, array) => (
+                                        <React.Fragment key={p}>
+                                            {index > 0 && array[index - 1] !== p - 1 && <span className="text-muted">...</span>}
+                                            <button
+                                                className={`btn ${currentPage === p ? 'btn-primary' : 'btn-outline'}`}
+                                                style={{ padding: '0', width: '32px', height: '32px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                onClick={() => fetchSales(p)}
+                                            >
+                                                {p}
+                                            </button>
+                                        </React.Fragment>
+                                    ))}
+                            </div>
+                            <button
+                                className="btn btn-outline"
+                                style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                                onClick={() => fetchSales(currentPage + 1)}
+                                disabled={currentPage === Math.ceil(totalSales / itemsPerPage)}
+                            >
+                                Próxima
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
