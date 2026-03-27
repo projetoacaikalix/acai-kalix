@@ -48,7 +48,8 @@ export default function Dashboard() {
         totalSales: 0,
         avgTicket: 0,
         maxSale: 0,
-        netProfit: 0
+        netProfit: 0,
+        totalUnits: 0
     });
 
     const [lowStockProducts, setLowStockProducts] = useState([]);
@@ -154,19 +155,22 @@ export default function Dashboard() {
 
             const { data: profitData } = await profitQuery;
             let totalProfit = 0;
-
+            let unitsTotal = 0;
+ 
             if (profitData) {
                 profitData.forEach(item => {
                     const salePrice = parseFloat(item.price) || 0;
                     const costPrice = parseFloat(item.products?.cost) || 0;
                     const quantity = parseInt(item.quantity) || 0;
                     totalProfit += (salePrice - costPrice) * quantity;
+                    unitsTotal += quantity;
                 });
             }
-
+ 
             setMetrics(prev => ({
                 ...prev,
-                netProfit: totalProfit
+                netProfit: totalProfit,
+                totalUnits: unitsTotal
             }));
 
         } catch (e) {
@@ -336,8 +340,18 @@ export default function Dashboard() {
                         <h3 className="text-muted" style={{ fontSize: '0.9rem', margin: 0 }}>Lucro Líquido</h3>
                         <TrendingUp size={20} color="var(--primary)" />
                     </div>
-                    <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: metrics.netProfit >= 0 ? 'var(--success)' : '#ef4444' }}>
+                    <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: '#000000' }}>
                         {formatCurrency(metrics.netProfit)}
+                    </p>
+                </div>
+
+                <div className="card" style={{ borderLeft: '4px solid #10b981' }}>
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-muted" style={{ fontSize: '0.9rem', margin: 0 }}>Unidades Vendidas</h3>
+                        <ShoppingBag size={20} color="#10b981" />
+                    </div>
+                    <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: '#000000' }}>
+                        {metrics.totalUnits}
                     </p>
                 </div>
 
