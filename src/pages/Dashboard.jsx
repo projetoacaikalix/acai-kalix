@@ -47,7 +47,8 @@ export default function Dashboard() {
         periodRev: 0,
         totalSales: 0,
         avgTicket: 0,
-        maxSale: 0
+        maxSale: 0,
+        netProfit: 0
     });
 
     const [lowStockProducts, setLowStockProducts] = useState([]);
@@ -144,6 +145,29 @@ export default function Dashboard() {
                     data: clientTotals.map(c => c.total)
                 });
             }
+
+            // 5. Calculate Net Profit
+            // Fetch all sale items for the period including product cost
+            let profitQuery = supabase.from('sale_items').select('quantity, price, products!inner(cost), sales!inner(created_at)');
+            if (dateFilter.start) profitQuery = profitQuery.gte('sales.created_at', `${dateFilter.start}T00:00:00`);
+            if (dateFilter.end) profitQuery = profitQuery.lte('sales.created_at', `${dateFilter.end}T23:59:59`);
+
+            const { data: profitData } = await profitQuery;
+            let totalProfit = 0;
+
+            if (profitData) {
+                profitData.forEach(item => {
+                    const salePrice = parseFloat(item.price) || 0;
+                    const costPrice = parseFloat(item.products?.cost) || 0;
+                    const quantity = parseInt(item.quantity) || 0;
+                    totalProfit += (salePrice - costPrice) * quantity;
+                });
+            }
+
+            setMetrics(prev => ({
+                ...prev,
+                netProfit: totalProfit
+            }));
 
         } catch (e) {
             console.error(e);
@@ -304,6 +328,16 @@ export default function Dashboard() {
                     </div>
                     <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0 }}>
                         {formatCurrency(metrics.maxSale)}
+                    </p>
+                </div>
+
+                <div className="card" style={{ borderLeft: '4px solid var(--primary)', background: 'linear-gradient(135deg, rgba(124, 67, 189, 0.05) 0%, rgba(124, 67, 189, 0.1) 100%)' }}>
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-muted" style={{ fontSize: '0.9rem', margin: 0 }}>Lucro Líquido</h3>
+                        <TrendingUp size={20} color="var(--primary)" />
+                    </div>
+                    <p style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: metrics.netProfit >= 0 ? 'var(--success)' : '#ef4444' }}>
+                        {formatCurrency(metrics.netProfit)}
                     </p>
                 </div>
 
